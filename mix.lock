@@ -1,0 +1,2 @@
+%{"ex_parsec": {:git, "https://github.com/alexrp/ex_parsec.git", "0a61090bd07ad2ed2d2c105dcaaf1199e054e209", []},
+  "monad": {:hex, :monad, "1.0.4"}}

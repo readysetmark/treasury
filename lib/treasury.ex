@@ -1,0 +1,2 @@
+defmodule Treasury do
+end
