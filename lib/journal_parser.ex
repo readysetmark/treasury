@@ -77,4 +77,28 @@ defmodule JournalParser do
 		return Enum.join(code_list)
 	end
 
+
+	# Payee Parser
+
+	@doc """
+	Expects and parses a payee.
+	"""
+	@spec payee() :: ExParsec.t(term(), String.t())
+	defmparser payee() do
+		payee_list <- many1(satisfy("payee character", &payee_character/1))
+		return Enum.join(payee_list)
+	end
+
+
+	# Comment Parser
+	@doc """
+	Expects and parses a comment that runs to the end of the line.
+	"""
+	@spec comment() :: ExParsec.t(term(), String.t())
+	defmparser comment() do
+		satisfy(";", &semicolon/1)
+		comment_list <- many(satisfy("comment character", &comment_character/1))
+		return Enum.join(comment_list)
+	end
+
 end

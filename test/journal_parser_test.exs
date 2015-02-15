@@ -63,5 +63,46 @@ defmodule JournalParserTest do
 		{:ok, _, code} = ExParsec.parse_text "()", code
 		assert code == ""
 	end
+
+
+	# Payee Parser Tests
+
+	test "Long payee" do
+		{:ok, _, payee} = ExParsec.parse_text "WonderMart - groceries, toiletries, kitchen supplies", payee
+		assert payee == "WonderMart - groceries, toiletries, kitchen supplies"
+	end
+
+	test "Short payee" do
+		{:ok, _, payee} = ExParsec.parse_text "WonderMart", payee
+		assert payee == "WonderMart"
+	end
+
+	test "Single character payee" do
+		{:ok, _, payee} = ExParsec.parse_text "Z", payee
+		assert payee == "Z"
+	end
+
+	test "Payee must have at least one character" do
+		{result, _} = ExParsec.parse_text "", payee
+		assert result == :error
+	end
+
+
+	# Comment Parser Tests
+
+	test "Comment with leading space" do
+		{:ok, _, comment} = ExParsec.parse_text "; Comment", comment
+		assert comment == " Comment"
+	end
+
+	test "Comment with no leading space" do
+		{:ok, _, comment} = ExParsec.parse_text ";Comment", comment
+		assert comment == "Comment"
+	end
+
+	test "Empty comment" do
+		{:ok, _, comment} = ExParsec.parse_text ";", comment
+		assert comment == ""
+	end
 	
 end
