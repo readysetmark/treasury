@@ -5,7 +5,7 @@ defmodule JournalParser do
 	import Terminals
 
 
-	# Date Parsing
+	# Date Parsers
 
 	@doc """
 	Expects and parses a 4 digit date.
@@ -46,5 +46,20 @@ defmodule JournalParser do
 		day <- day()
 		return {year, month, day}
 	end
-	
+
+
+	# Transaction Status Parser
+
+	@doc """
+	Expects and parses a transaction status (cleared or uncleared).
+	"""
+	@spec transaction_status() :: ExParsec.t(term(), :cleared | :uncleared)
+	defmparser transaction_status() do
+		status <- satisfy("transaction status flag", &transaction_status/1)
+
+		case status do
+			"*" -> return :cleared
+			_   -> return :uncleared
+		end
+	end
 end

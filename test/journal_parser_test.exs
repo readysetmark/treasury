@@ -32,5 +32,18 @@ defmodule JournalParserTest do
 		assert month == 2
 		assert day == 14
 	end
-	
+
+
+	# Transaction Status Parser Tests
+
+	test "* denotes cleared transaction" do
+		{:ok, _, status} = ExParsec.parse_text "*", transaction_status
+		assert status == :cleared
+	end
+
+	test "! denotes uncleared transaction" do
+		{:ok, _, status} = ExParsec.parse_text "!", transaction_status
+		assert status == :uncleared
+	end
+
 end

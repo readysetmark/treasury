@@ -1,5 +1,5 @@
 defmodule Terminals do
-	
+
 	@doc """
 	Terminals for date separator.
 	"""
@@ -8,4 +8,12 @@ defmodule Terminals do
 		c == "/" or c == "-"
 	end
 
+	@doc """
+	Terminals for transaction status flags.
+	"""
+	@spec transaction_status(String.codepoint()) :: boolean()
+	def transaction_status(c) do
+		c == "*" or c == "!"
+	end
+	
 end
