@@ -46,4 +46,22 @@ defmodule JournalParserTest do
 		assert status == :uncleared
 	end
 
+
+	# Code Parser Tests
+
+	test "Long transaction code" do
+		{:ok, _, code} = ExParsec.parse_text "(conf# ABC-123-def)", code
+		assert code == "conf# ABC-123-def"
+	end
+
+	test "Short transaction code" do
+		{:ok, _, code} = ExParsec.parse_text "(89)", code
+		assert code == "89"
+	end
+
+	test "Empty code" do
+		{:ok, _, code} = ExParsec.parse_text "()", code
+		assert code == ""
+	end
+	
 end

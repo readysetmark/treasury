@@ -40,9 +40,9 @@ defmodule JournalParser do
 	@spec date() :: ExParsec.t(term(), {integer(), integer(), integer()})
 	defmparser date() do
 		year <- year()
-		satisfy("date separator", &date_sep/1)
+		satisfy("date separator", &date_separator/1)
 		month <- month()
-		satisfy("date separator", &date_sep/1)
+		satisfy("date separator", &date_separator/1)
 		day <- day()
 		return {year, month, day}
 	end
@@ -62,4 +62,19 @@ defmodule JournalParser do
 			_   -> return :uncleared
 		end
 	end
+
+
+	# Code Parser
+
+	@doc """
+	Expects and parses a transaction code between parentheses.
+	"""
+	@spec code() :: ExParsec.t(term(), String.t())
+	defmparser code() do
+		satisfy("(", &open_parenthesis/1)
+		code_list <- many(satisfy("code character", &code_character/1))
+		satisfy(")", &close_parenthesis/1)
+		return Enum.join(code_list)
+	end
+
 end
