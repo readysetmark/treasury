@@ -4,6 +4,17 @@ defmodule JournalParser do
 	import ExParsec.Helpers
 	import Terminals
 
+	# Line Number Parser
+
+	@doc """
+	Get current line number.
+	"""
+	@spec line_number() :: ExParsec.t(term(), integer())
+	defmparser line_number() do
+		pos <- get_position()
+		return pos.line
+	end
+
 
 	# Date Parsers
 

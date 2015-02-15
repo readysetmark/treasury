@@ -1,6 +1,14 @@
 defmodule JournalParserTest do
 	use ExUnit.Case, async: true
 	import JournalParser
+
+	# Line Number Parser Tests
+
+	test "First line is 1" do
+		{:ok, _, line_num} = ExParsec.parse_text "One Line", line_number
+		assert line_num == 1
+	end
+
 	
 	# Date Parser Tests
 
@@ -104,5 +112,5 @@ defmodule JournalParserTest do
 		{:ok, _, comment} = ExParsec.parse_text ";", comment
 		assert comment == ""
 	end
-	
+
 end
