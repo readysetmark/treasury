@@ -33,6 +33,30 @@ defmodule Terminals do
 	end
 
 	@doc """
+	Space.
+	"""
+	@spec space(String.codepoint()) :: boolean()
+	def space(c) do
+		c == " "
+	end
+
+	@doc """
+	Tab.
+	"""
+	@spec tab(String.codepoint()) :: boolean()
+	def tab(c) do
+		c == "\t"
+	end
+
+	@doc """
+	Whitespace.
+	"""
+	@spec whitespace(String.codepoint()) :: boolean()
+	def whitespace(c) do
+		space(c) or tab(c)
+	end
+
+	@doc """
 	Terminals for date separator.
 	"""
 	@spec date_separator(String.codepoint()) :: boolean()

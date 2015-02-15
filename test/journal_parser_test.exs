@@ -2,6 +2,24 @@ defmodule JournalParserTest do
 	use ExUnit.Case, async: true
 	import JournalParser
 
+	# Helpers Tests
+
+	test "Skip whitespace skips spaces" do
+		{:ok, _, result} = ExParsec.parse_text "   ", skip_whitespace
+		assert result == nil
+	end
+
+	test "Skip whitespace skips tabs" do
+		{:ok, _, result} = ExParsec.parse_text "\t\t\t", skip_whitespace
+		assert result == nil
+	end
+
+	test "Skip whitespace skips tabs and spaces" do
+		{:ok, _, result} = ExParsec.parse_text " \t\t  ", skip_whitespace
+		assert result == nil
+	end
+
+
 	# Line Number Parser Tests
 
 	test "First line is 1" do
@@ -111,6 +129,53 @@ defmodule JournalParserTest do
 	test "Empty comment" do
 		{:ok, _, comment} = ExParsec.parse_text ";", comment
 		assert comment == ""
+	end
+
+
+	# Transaction Header Parser Tests
+
+	test "Full transaction header" do
+		{:ok, _, {line_num, date, status, code, payee, comment}} =
+			ExParsec.parse_text "2015/02/15 * (conf# abc-123) Payee ;Comment", transaction_header
+		assert line_num == 1
+		assert date == {2015, 2, 15}
+		assert status == :cleared
+		assert code == {:ok, "conf# abc-123"}
+		assert payee == "Payee "
+		assert comment == {:ok, "Comment"}
+	end
+
+	test "Transaction header with code and no comment" do
+		{:ok, _, {line_num, date, status, code, payee, comment}} =
+			ExParsec.parse_text "2015/02/15 ! (conf# abc-123) Payee", transaction_header
+		assert line_num == 1
+		assert date == {2015, 2, 15}
+		assert status == :uncleared
+		assert code == {:ok, "conf# abc-123"}
+		assert payee == "Payee"
+		assert comment == nil
+	end
+
+	test "Transaction header with comment and no code" do
+		{:ok, _, {line_num, date, status, code, payee, comment}} =
+			ExParsec.parse_text "2015/02/15 * Payee ;Comment", transaction_header
+		assert line_num == 1
+		assert date == {2015, 2, 15}
+		assert status == :cleared
+		assert code == nil
+		assert payee == "Payee "
+		assert comment == {:ok, "Comment"}
+	end
+
+	test "Transaction header with no code or comment" do
+		{:ok, _, {line_num, date, status, code, payee, comment}} =
+			ExParsec.parse_text "2015/02/15 * Payee", transaction_header
+		assert line_num == 1
+		assert date == {2015, 2, 15}
+		assert status == :cleared
+		assert code == nil
+		assert payee == "Payee"
+		assert comment == nil
 	end
 
 end

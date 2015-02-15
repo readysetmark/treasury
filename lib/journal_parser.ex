@@ -4,6 +4,17 @@ defmodule JournalParser do
 	import ExParsec.Helpers
 	import Terminals
 
+	# Helpers
+
+	@doc """
+	Skips whitespace.
+	"""
+	@spec skip_whitespace() :: ExParsec.t(term(), nil)
+	defmparser skip_whitespace() do
+		skip_many(satisfy("whitespace", &whitespace/1))
+	end
+
+
 	# Line Number Parser
 
 	@doc """
@@ -102,6 +113,7 @@ defmodule JournalParser do
 
 
 	# Comment Parser
+	
 	@doc """
 	Expects and parses a comment that runs to the end of the line.
 	"""
@@ -110,6 +122,26 @@ defmodule JournalParser do
 		satisfy(";", &semicolon/1)
 		comment_list <- many(satisfy("comment character", &comment_character/1))
 		return Enum.join(comment_list)
+	end
+
+
+	# Transaction Header Parser
+
+	@doc """
+	Expects a transaction header (first line).
+	"""
+	defmparser transaction_header() do
+		line_num <- line_number()
+		date <- date()
+		skip_whitespace()
+		status <- transaction_status()
+		skip_whitespace()
+		code <- option(code())
+		skip_whitespace()
+		payee <- payee()
+		comment <- option(comment())
+
+		return {line_num, date, status, code, payee, comment}
 	end
 
 end
