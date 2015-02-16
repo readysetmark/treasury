@@ -25,6 +25,14 @@ defmodule Terminals do
 	end
 
 	@doc """
+	Colon.
+	"""
+	@spec colon(String.codepoint()) :: boolean()
+	def colon(c) do
+		c == ":"
+	end
+
+	@doc """
 	Newline.
 	"""
 	@spec newline(String.codepoint()) :: boolean()

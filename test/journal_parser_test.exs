@@ -178,4 +178,27 @@ defmodule JournalParserTest do
 		assert comment == nil
 	end
 
+
+	# Account Parser Tests
+
+	test "Sub-account is any alphanumeric" do
+		{:ok, _, sub} = ExParsec.parse_text "ABCabc123", sub_account
+		assert sub == "ABCabc123"
+	end
+
+	test "Sub-account can start with digit" do
+		{:ok, _, sub} = ExParsec.parse_text "123abcABC", sub_account
+		assert sub == "123abcABC"
+	end
+
+	test "Multiple level account" do
+		{:ok, _, accounts} = ExParsec.parse_text "Expenses:Food:Groceries", account
+		assert accounts == ["Expenses", "Food", "Groceries"]
+	end
+
+	test "Single level account" do
+		{:ok, _, accounts} = ExParsec.parse_text "Expenses", account
+		assert accounts == ["Expenses"]
+	end
+
 end

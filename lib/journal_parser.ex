@@ -128,7 +128,7 @@ defmodule JournalParser do
 	# Transaction Header Parser
 
 	@doc """
-	Expects a transaction header (first line).
+	Expects and parses a transaction header (first line).
 	"""
 	@spec transaction_header() :: 
 				ExParsec.t(term(), {integer(), {integer(), integer(), integer()},
@@ -146,6 +146,26 @@ defmodule JournalParser do
 		comment <- option(comment())
 
 		return {line_num, date, status, code, payee, comment}
+	end
+
+
+	# Account Parsers
+
+	@doc """
+	Expects and parses a sub-account name.
+	"""
+	@spec sub_account() :: ExParsec.t(term(), String.t())
+	defmparser sub_account() do
+		list <- many1(alphanumeric())
+		return Enum.join(list)
+	end
+
+	@doc """
+	Expects and parses a full account name.
+	"""
+	@spec account() :: ExParsec.t(term(), [String.t()])
+	defmparser account() do
+		sep_by1(sub_account(), satisfy("account separator", &colon/1))
 	end
 
 end
