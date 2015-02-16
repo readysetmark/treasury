@@ -151,6 +151,8 @@ defmodule JournalParser do
 
 	# Account Parsers
 
+	# Very simple account parsers right now. Account must be alphanumeric.
+
 	@doc """
 	Expects and parses a sub-account name.
 	"""
