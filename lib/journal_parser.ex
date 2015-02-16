@@ -130,6 +130,10 @@ defmodule JournalParser do
 	@doc """
 	Expects a transaction header (first line).
 	"""
+	@spec transaction_header() :: 
+				ExParsec.t(term(), {integer(), {integer(), integer(), integer()},
+									 String.t(), {:ok, String.t()} | nil, String.t(),
+									 {:ok, String.t()} | nil})
 	defmparser transaction_header() do
 		line_num <- line_number()
 		date <- date()
