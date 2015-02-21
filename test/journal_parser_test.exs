@@ -262,4 +262,43 @@ defmodule JournalParserTest do
 		assert frac == {:ok, "793"}
 	end
 
+
+	# Symbol Parser Tests
+
+	test "Quoted symbol \"MTF5004\"" do
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "\"MTF5004\"", quoted_symbol
+		assert type == :quoted
+		assert symbol == "MTF5004"
+	end
+
+	test "Unquoted symbol $" do
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "$", unquoted_symbol
+		assert type == :unquoted
+		assert symbol == "$"
+	end
+
+	test "Unquoted symbol US$" do
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "US$", unquoted_symbol
+		assert type == :unquoted
+		assert symbol == "US$"
+	end
+
+	test "Unquoted symbol AAPL" do
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "AAPL", unquoted_symbol
+		assert type == :unquoted
+		assert symbol == "AAPL"
+	end
+
+	test "Symbol that is quoted" do
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "\"MUT231\"", symbol
+		assert type == :quoted
+		assert symbol == "MUT231"
+	end
+
+	test "Symbol that is unquoted" do
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "$", symbol
+		assert type == :unquoted
+		assert symbol == "$"
+	end
+
 end

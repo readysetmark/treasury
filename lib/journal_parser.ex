@@ -202,7 +202,7 @@ defmodule JournalParser do
 	"""
 	@spec fractional_part() :: ExParsec.t(term(), String.t())
 	defmparser fractional_part() do
-		separator <- char(".")
+		char(".")
 		digit_list <- many1(digit())
 
 		return Enum.join(digit_list)
@@ -218,6 +218,38 @@ defmodule JournalParser do
 		fractional_part <- option(fractional_part())
 
 		return {sign, integer_part, fractional_part}
+	end
+
+
+	# Symbol Parsers
+
+	@doc """
+	Expects and parses a quoted symbol.
+	"""
+	@spec quoted_symbol() :: ExParsec.t(term(), {:quoted, String.t()})
+	defmparser quoted_symbol() do
+		satisfy("quote", &quote_terminal/1)
+		symbol_list <- many1(satisfy("quoted symbol character", &quoted_symbol_character/1))
+		satisfy("quote", &quote_terminal/1)
+
+		return {:quoted, Enum.join(symbol_list)}
+	end
+
+	@doc """
+	Expects and parses an unquoted symbol. Unquoted symbols have a restricted character set.
+	"""
+	@spec unquoted_symbol() :: ExParsec.t(term(), {:unquoted, String.t()})
+	defmparser unquoted_symbol() do
+		symbol_list <- many1(satisfy("unquoted symbol character", &unquoted_symbol_character/1))
+		return {:unquoted, Enum.join(symbol_list)}
+	end
+
+	@doc """
+	Expects and parses a quoted or unquoted symbol.
+	"""
+	@spec symbol() :: ExParsec.t(term(), {:quoted | :unquoted, String.t()})
+	defmparser symbol() do
+		either(quoted_symbol(), unquoted_symbol())
 	end
 
 

@@ -41,6 +41,14 @@ defmodule Terminals do
 	end
 
 	@doc """
+	Quote.
+	"""
+	@spec quote_terminal(String.codepoint()) :: boolean()
+	def quote_terminal(c) do
+		c == "\""
+	end
+
+	@doc """
 	Newline.
 	"""
 	@spec newline(String.codepoint()) :: boolean()
@@ -70,6 +78,14 @@ defmodule Terminals do
 	@spec whitespace(String.codepoint()) :: boolean()
 	def whitespace(c) do
 		space(c) or tab(c)
+	end
+
+	@doc """
+	Digit.
+	"""
+	@spec digit(String.codepoint()) :: boolean()
+	def digit(<<c :: utf8>>) do
+		c in ?0 .. ?0
 	end
 
 	@doc """
@@ -110,6 +126,23 @@ defmodule Terminals do
 	@spec comment_character(String.codepoint()) :: boolean()
 	def comment_character(c) do
 		!newline(c)
+	end
+
+	@doc """
+	Terminals for a quoted symbol.
+	"""
+	@spec quoted_symbol_character(String.codepoint()) :: boolean()
+	def quoted_symbol_character(c) do
+		!newline(c) and !quote_terminal(c)
+	end
+
+	@doc """
+	Terminals for an unquoted symbol.
+	"""
+	@spec unquoted_symbol_character(String.codepoint()) :: boolean()
+	def unquoted_symbol_character(c) do
+		!newline(c) and !quote_terminal(c) and !semicolon(c) and !whitespace(c) 
+			and !dash(c) and !digit(c)
 	end
 
 end
