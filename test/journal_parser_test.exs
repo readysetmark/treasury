@@ -201,4 +201,65 @@ defmodule JournalParserTest do
 		assert accounts == ["Expenses"]
 	end
 
+
+	# Quantity Parser Tests
+
+	test "Negative sign" do
+		{:ok, _, sign} = ExParsec.parse_text "-", sign
+		assert sign == :negative
+	end
+
+	test "Positive sign" do
+		{:ok, _, sign} = ExParsec.parse_text "", sign
+		assert sign == :positive
+	end
+
+	test "Simple integer" do
+		{:ok, _, int} = ExParsec.parse_text "43", integer
+		assert int == "43"
+	end
+
+	test "Integer with separator" do
+		{:ok, _, int} = ExParsec.parse_text "1,204", integer
+		assert int == "1,204"
+	end
+
+	test "Fractional part (two digits)" do
+		{:ok, _, frac} = ExParsec.parse_text ".98", fractional_part
+		assert frac == "98"
+	end
+
+	test "Fractional part (three digits)" do
+		{:ok, _, frac} = ExParsec.parse_text ".806", fractional_part
+		assert frac == "806"
+	end
+
+	test "Negative quantity with no fractional part" do
+		{:ok, _, {sign, int, frac}} = ExParsec.parse_text "-1,110", quantity
+		assert sign == :negative
+		assert int == "1,110"
+		assert frac == nil
+	end
+
+	test "Positive quantity with no factional part" do
+		{:ok, _, {sign, int, frac}} = ExParsec.parse_text "2,314", quantity
+		assert sign == :positive
+		assert int == "2,314"
+		assert frac == nil
+	end
+
+	test "Negative quantity with fractional part" do
+		{:ok, _, {sign, int, frac}} = ExParsec.parse_text "-1,110.38", quantity
+		assert sign == :negative
+		assert int == "1,110"
+		assert frac == {:ok, "38"}
+	end
+
+	test "Positive quantity with factional part" do
+		{:ok, _, {sign, int, frac}} = ExParsec.parse_text "24521.793", quantity
+		assert sign == :positive
+		assert int == "24521"
+		assert frac == {:ok, "793"}
+	end
+
 end

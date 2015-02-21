@@ -33,6 +33,14 @@ defmodule Terminals do
 	end
 
 	@doc """
+	Dash.
+	"""
+	@spec dash(String.codepoint()) :: boolean()
+	def dash(c) do
+		c == "-"
+	end
+
+	@doc """
 	Newline.
 	"""
 	@spec newline(String.codepoint()) :: boolean()

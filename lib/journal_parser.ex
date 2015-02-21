@@ -170,4 +170,64 @@ defmodule JournalParser do
 		sep_by1(sub_account(), satisfy("account separator", &colon/1))
 	end
 
+
+	# Quantity Parsers
+
+	@doc """
+	Expects and parses an optional negative sign. If sign not provided, :positive is assumed.
+	"""
+	@spec sign() :: ExParsec.t(term(), :positive | :negative)
+	defmparser sign() do
+		neg_sign <- option(satisfy("negative sign", &dash/1))
+
+		case neg_sign do
+			{:ok, "-"} -> return :negative
+			_ 				 -> return :positive
+		end
+	end
+
+	@doc """
+	Expects and parses an integer (allows comma-separators).
+	"""
+	@spec integer() :: ExParsec.t(term(), String.t())
+	defmparser integer() do
+		first_digit <- digit()
+		digit_list <- many(either(digit(), char(",")))
+
+		return Enum.join([first_digit|digit_list])
+	end
+
+	@doc """
+	Expects and parses a fractional part.
+	"""
+	@spec fractional_part() :: ExParsec.t(term(), String.t())
+	defmparser fractional_part() do
+		separator <- char(".")
+		digit_list <- many1(digit())
+
+		return Enum.join(digit_list)
+	end
+
+	@doc """
+	Expects and parses a negative or positive quantity which may have a fractional part.
+	"""
+	@spec quantity() :: ExParsec.t(term(), {String.t(), String.t(), {:ok, String.t()} | nil})
+	defmparser quantity() do
+		sign <- sign()
+		integer_part <- integer()
+		fractional_part <- option(fractional_part())
+
+		return {sign, integer_part, fractional_part}
+	end
+
+
+	# Amount Parsers
+
+	# An amount is a quantity and a symbol representing the commodity.
+	# An amount may be specified the following ways:
+	#		- {symbol}{quantity} :: symbol on the left with no space between
+	#		
+
+
+
 end
