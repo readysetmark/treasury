@@ -4,19 +4,34 @@ defmodule JournalParserTest do
 
 	# Helpers Tests
 
-	test "Skip whitespace skips spaces" do
-		{:ok, _, result} = ExParsec.parse_text "   ", skip_whitespace
-		assert result == nil
+	test "Whitespace just spaces" do
+		{:ok, _, result} = ExParsec.parse_text "   ", whitespace
+		assert result == :whitespace
 	end
 
-	test "Skip whitespace skips tabs" do
-		{:ok, _, result} = ExParsec.parse_text "\t\t\t", skip_whitespace
-		assert result == nil
+	test "Whitespace just tabs" do
+		{:ok, _, result} = ExParsec.parse_text "\t\t\t", whitespace
+		assert result == :whitespace
 	end
 
-	test "Skip whitespace skips tabs and spaces" do
-		{:ok, _, result} = ExParsec.parse_text " \t\t  ", skip_whitespace
-		assert result == nil
+	test "Whitespace tabs and spaces" do
+		{:ok, _, result} = ExParsec.parse_text " \t\t  ", whitespace
+		assert result == :whitespace
+	end
+
+	test "Whitespace nothing" do
+		{:ok, _, result} = ExParsec.parse_text "", whitespace
+		assert result == :no_whitespace
+	end
+
+	test "Mandatory whitespace" do
+		{:ok, _, result} = ExParsec.parse_text " ", mandatory_whitespace
+		assert result == :whitespace
+	end
+
+	test "Mandatory whitespace missing" do
+		{result, _} = ExParsec.parse_text "", mandatory_whitespace
+		assert result == :error
 	end
 
 
@@ -289,6 +304,12 @@ defmodule JournalParserTest do
 		assert symbol == "AAPL"
 	end
 
+	test "Unquoted symbol in $13,245.00" do
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "$13,245.00", unquoted_symbol
+		assert type == :unquoted
+		assert symbol == "$"
+	end
+
 	test "Symbol that is quoted" do
 		{:ok, _, {type, symbol}} = ExParsec.parse_text "\"MUT231\"", symbol
 		assert type == :quoted
@@ -299,6 +320,56 @@ defmodule JournalParserTest do
 		{:ok, _, {type, symbol}} = ExParsec.parse_text "$", symbol
 		assert type == :unquoted
 		assert symbol == "$"
+	end
+
+
+	# Amount Parser Tests
+
+	test "Amount symbol then quantity with whitespace" do
+		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$ 13,245.00", amount_symbol_then_quantity
+		assert desc == :symbol_left_with_space
+		assert qty == {:positive, "13,245", {:ok, "00"}}
+		assert symbol == {:unquoted, "$"}
+	end
+
+	test "Amount symbol then quantity no whitespace" do
+		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$13,245.00", amount_symbol_then_quantity
+		assert desc == :symbol_left_no_space
+		assert qty == {:positive, "13,245", {:ok, "00"}}
+		assert symbol == {:unquoted, "$"}
+	end
+
+	test "Amount quantity then symbol with whitespace" do
+		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "13,245.463 AAPL", amount_quantity_then_symbol
+		assert desc == :symbol_right_with_space
+		assert qty == {:positive, "13,245", {:ok, "463"}}
+		assert symbol == {:unquoted, "AAPL"}
+	end
+
+	test "Amount quantity then symbol no whitespace" do
+		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "13,245.463\"MUTF803\"", amount_quantity_then_symbol
+		assert desc == :symbol_right_no_space
+		assert qty == {:positive, "13,245", {:ok, "463"}}
+		assert symbol == {:quoted, "MUTF803"}
+	end
+
+	test "Amount $13,255.22" do
+		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$13,255.22", amount
+		assert desc == :symbol_left_no_space
+		assert qty == {:positive, "13,255", {:ok, "22"}}
+		assert symbol == {:unquoted, "$"}
+	end
+
+	test "Amount 4.256 \"MUTF514\"" do
+		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "4.256 \"MUTF514\"", amount
+		assert desc == :symbol_right_with_space
+		assert qty == {:positive, "4", {:ok, "256"}}
+		assert symbol == {:quoted, "MUTF514"}
+	end
+
+	test "Amount inferred" do
+		{:ok, _, result} = ExParsec.parse_text "", amount
+		assert result == :infer_amount
 	end
 
 end

@@ -141,8 +141,8 @@ defmodule Terminals do
 	"""
 	@spec unquoted_symbol_character(String.codepoint()) :: boolean()
 	def unquoted_symbol_character(c) do
-		!newline(c) and !quote_terminal(c) and !semicolon(c) and !whitespace(c) 
-			and !dash(c) and !digit(c)
+		codepoints = String.codepoints("-0123456789; \"\t\r\n")
+		!(c in codepoints)
 	end
 
 end

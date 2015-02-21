@@ -7,13 +7,26 @@ defmodule JournalParser do
 	# Helpers
 
 	@doc """
-	Skips whitespace.
+	Whitespace.
 	"""
-	@spec skip_whitespace() :: ExParsec.t(term(), nil)
-	defmparser skip_whitespace() do
-		skip_many(satisfy("whitespace", &whitespace/1))
+	@spec whitespace() :: ExParsec.t(term(), :whitespace | :no_whitespace)
+	defmparser whitespace() do
+		list <- many(satisfy("whitespace", &whitespace/1))
+
+		case list do
+			_ when length(list) > 0 -> return :whitespace
+			_												-> return :no_whitespace
+		end
 	end
 
+	@doc """
+	Mandatory whitespace (one or more whitespace characters).
+	"""
+	@spec mandatory_whitespace() :: ExParsec.t(term(), :whitespace)
+	defmparser mandatory_whitespace() do
+		many1(satisfy("whitespace", &whitespace/1))
+		return :whitespace
+	end
 
 	# Line Number Parser
 
@@ -137,11 +150,11 @@ defmodule JournalParser do
 	defmparser transaction_header() do
 		line_num <- line_number()
 		date <- date()
-		skip_whitespace()
+		whitespace()
 		status <- transaction_status()
-		skip_whitespace()
+		whitespace()
 		code <- option(code())
-		skip_whitespace()
+		whitespace()
 		payee <- payee()
 		comment <- option(comment())
 
@@ -257,9 +270,55 @@ defmodule JournalParser do
 
 	# An amount is a quantity and a symbol representing the commodity.
 	# An amount may be specified the following ways:
-	#		- {symbol}{quantity} :: symbol on the left with no space between
-	#		
+	#		{symbol}{quantity}  :: symbol on left with no whitespace between
+	#   {symbol} {quantity} :: symbol on left with whitespace between
+	#		{quantity}{symbol}  :: symbol on right with no whitespace between
+	#   {quantity} {symbol} :: sybmol on right with whitespace between
 
+	@doc """
+	Expects and parses an amount in the format of symbol then quantity.
+	"""
+	# !!! TODO: NEED TO DEFINE TYPE SPEC HERE !!!
+	#@spec amount_symbol_then_quantity() :: ExParsec.t(term(), )
+	defmparser amount_symbol_then_quantity() do
+		symbol <- symbol()
+		ws <- whitespace()
+		qty <- quantity()
 
+		case ws do
+			:whitespace    -> return {:symbol_left_with_space, qty, symbol}
+			:no_whitespace -> return {:symbol_left_no_space, qty, symbol}
+		end
+	end
+
+	@doc """
+	Expects and parses an amount in the format of quantity then symbol.
+	"""
+	# !!! TODO: NEED TO DEFINE TYPE SPEC HERE !!!
+	#@spec amount_quantity_then_symbol() :: ExParsec.t(term(), )
+	defmparser amount_quantity_then_symbol() do
+		qty <- quantity()
+		ws <- whitespace()
+		symbol <- symbol()
+
+		case ws do
+			:whitespace	   -> return {:symbol_right_with_space, qty, symbol}
+			:no_whitespace -> return {:symbol_right_no_space, qty, symbol}
+		end
+	end
+
+	@doc """
+	Expects and parses an amount.
+	"""
+	# !!! TODO: NEED TO DEFINE TYPE SPEC HERE !!!
+	#@spec amount() :: ExParsec.t(term(), )
+	defmparser amount() do
+		amount <- option(either(amount_symbol_then_quantity(), amount_quantity_then_symbol()))
+
+		case amount do
+			{:ok, amount} -> return amount
+			nil           -> return :infer_amount
+		end
+	end
 
 end
