@@ -83,14 +83,14 @@ defmodule JournalParser do
 	end
 
 
-	# Transaction Status Parser
+	# Entry Status Parser
 
 	@doc """
-	Expects and parses a transaction status (cleared or uncleared).
+	Expects and parses a entry status (cleared or uncleared).
 	"""
-	@spec transaction_status() :: ExParsec.t(term(), :cleared | :uncleared)
-	defmparser transaction_status() do
-		status <- satisfy("transaction status flag", &transaction_status/1)
+	@spec entry_status() :: ExParsec.t(term(), :cleared | :uncleared)
+	defmparser entry_status() do
+		status <- satisfy("entry status flag", &entry_status/1)
 
 		case status do
 			"*" -> return :cleared
@@ -102,7 +102,7 @@ defmodule JournalParser do
 	# Code Parser
 
 	@doc """
-	Expects and parses a transaction code between parentheses.
+	Expects and parses an entry code between parentheses.
 	"""
 	@spec code() :: ExParsec.t(term(), String.t())
 	defmparser code() do
@@ -138,20 +138,20 @@ defmodule JournalParser do
 	end
 
 
-	# Transaction Header Parser
+	# Entry Header Parser
 
 	@doc """
-	Expects and parses a transaction header (first line).
+	Expects and parses an entry header (first line).
 	"""
-	@spec transaction_header() :: 
+	@spec entry_header() :: 
 				ExParsec.t(term(), {integer(), {integer(), integer(), integer()},
 									 String.t(), {:ok, String.t()} | nil, String.t(),
 									 {:ok, String.t()} | nil})
-	defmparser transaction_header() do
+	defmparser entry_header() do
 		line_num <- line_number()
 		date <- date()
 		whitespace()
-		status <- transaction_status()
+		status <- entry_status()
 		whitespace()
 		code <- option(code())
 		whitespace()

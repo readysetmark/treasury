@@ -97,15 +97,15 @@ defmodule Terminals do
 	end
 
 	@doc """
-	Terminals for transaction status flags.
+	Terminals for entry status flags.
 	"""
-	@spec transaction_status(String.codepoint()) :: boolean()
-	def transaction_status(c) do
+	@spec entry_status(String.codepoint()) :: boolean()
+	def entry_status(c) do
 		c == "*" or c == "!"
 	end
 
 	@doc """
-	Terminals for transaction code.
+	Terminals for entry code.
 	"""
 	@spec code_character(String.codepoint()) :: boolean()
 	def code_character(c) do

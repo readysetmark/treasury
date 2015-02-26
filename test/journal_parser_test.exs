@@ -75,27 +75,27 @@ defmodule JournalParserTest do
 	end
 
 
-	# Transaction Status Parser Tests
+	# Entry Status Parser Tests
 
-	test "* denotes cleared transaction" do
-		{:ok, _, status} = ExParsec.parse_text "*", transaction_status
+	test "* denotes cleared entry" do
+		{:ok, _, status} = ExParsec.parse_text "*", entry_status
 		assert status == :cleared
 	end
 
-	test "! denotes uncleared transaction" do
-		{:ok, _, status} = ExParsec.parse_text "!", transaction_status
+	test "! denotes uncleared entry" do
+		{:ok, _, status} = ExParsec.parse_text "!", entry_status
 		assert status == :uncleared
 	end
 
 
 	# Code Parser Tests
 
-	test "Long transaction code" do
+	test "Long entry code" do
 		{:ok, _, code} = ExParsec.parse_text "(conf# ABC-123-def)", code
 		assert code == "conf# ABC-123-def"
 	end
 
-	test "Short transaction code" do
+	test "Short entry code" do
 		{:ok, _, code} = ExParsec.parse_text "(89)", code
 		assert code == "89"
 	end
@@ -147,11 +147,11 @@ defmodule JournalParserTest do
 	end
 
 
-	# Transaction Header Parser Tests
+	# Entry Header Parser Tests
 
-	test "Full transaction header" do
+	test "Full entry header" do
 		{:ok, _, {line_num, date, status, code, payee, comment}} =
-			ExParsec.parse_text "2015/02/15 * (conf# abc-123) Payee ;Comment", transaction_header
+			ExParsec.parse_text "2015/02/15 * (conf# abc-123) Payee ;Comment", entry_header
 		assert line_num == 1
 		assert date == {2015, 2, 15}
 		assert status == :cleared
@@ -160,9 +160,9 @@ defmodule JournalParserTest do
 		assert comment == {:ok, "Comment"}
 	end
 
-	test "Transaction header with code and no comment" do
+	test "Entry header with code and no comment" do
 		{:ok, _, {line_num, date, status, code, payee, comment}} =
-			ExParsec.parse_text "2015/02/15 ! (conf# abc-123) Payee", transaction_header
+			ExParsec.parse_text "2015/02/15 ! (conf# abc-123) Payee", entry_header
 		assert line_num == 1
 		assert date == {2015, 2, 15}
 		assert status == :uncleared
@@ -171,9 +171,9 @@ defmodule JournalParserTest do
 		assert comment == nil
 	end
 
-	test "Transaction header with comment and no code" do
+	test "Entry header with comment and no code" do
 		{:ok, _, {line_num, date, status, code, payee, comment}} =
-			ExParsec.parse_text "2015/02/15 * Payee ;Comment", transaction_header
+			ExParsec.parse_text "2015/02/15 * Payee ;Comment", entry_header
 		assert line_num == 1
 		assert date == {2015, 2, 15}
 		assert status == :cleared
@@ -182,9 +182,9 @@ defmodule JournalParserTest do
 		assert comment == {:ok, "Comment"}
 	end
 
-	test "Transaction header with no code or comment" do
+	test "Entry header with no code or comment" do
 		{:ok, _, {line_num, date, status, code, payee, comment}} =
-			ExParsec.parse_text "2015/02/15 * Payee", transaction_header
+			ExParsec.parse_text "2015/02/15 * Payee", entry_header
 		assert line_num == 1
 		assert date == {2015, 2, 15}
 		assert status == :cleared
