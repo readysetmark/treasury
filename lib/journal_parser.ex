@@ -3,6 +3,7 @@ defmodule JournalParser do
 	import ExParsec.Text
 	import ExParsec.Helpers
 	import Terminals
+	alias Types.Date
 
 	# Helpers
 
@@ -72,14 +73,14 @@ defmodule JournalParser do
 	@doc """
 	Expects and parses a date expressed as 2015/02/14 or 2015-02-14.
 	"""
-	@spec date() :: ExParsec.t(term(), {integer(), integer(), integer()})
+	@spec date() :: ExParsec.t(term(), Date.t())
 	defmparser date() do
 		year <- year()
 		satisfy("date separator", &date_separator/1)
 		month <- month()
 		satisfy("date separator", &date_separator/1)
 		day <- day()
-		return {year, month, day}
+		return %Date{year: year, month: month, day: day}
 	end
 
 

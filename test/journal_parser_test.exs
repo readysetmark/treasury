@@ -1,6 +1,7 @@
 defmodule JournalParserTest do
 	use ExUnit.Case, async: true
 	import JournalParser
+	alias Types.Date
 
 	# Helpers Tests
 
@@ -61,17 +62,17 @@ defmodule JournalParserTest do
 	end
 
 	test "Parse date with slashes" do
-		{:ok, _, {year, month, day}} = ExParsec.parse_text "2015/02/14", date
-		assert year == 2015
-		assert month == 2
-		assert day == 14
+		{:ok, _, date} = ExParsec.parse_text "2015/02/14", date
+		assert date.year == 2015
+		assert date.month == 2
+		assert date.day == 14
 	end
 
 	test "Parse date with dashes" do
-		{:ok, _, {year, month, day}} = ExParsec.parse_text "2015-02-14", date
-		assert year == 2015
-		assert month == 2
-		assert day == 14
+		{:ok, _, date} = ExParsec.parse_text "2015-02-14", date
+		assert date.year == 2015
+		assert date.month == 2
+		assert date.day == 14
 	end
 
 
@@ -153,7 +154,7 @@ defmodule JournalParserTest do
 		{:ok, _, {line_num, date, status, code, payee, comment}} =
 			ExParsec.parse_text "2015/02/15 * (conf# abc-123) Payee ;Comment", entry_header
 		assert line_num == 1
-		assert date == {2015, 2, 15}
+		assert date == %Date{year: 2015, month: 2, day: 15}
 		assert status == :cleared
 		assert code == {:ok, "conf# abc-123"}
 		assert payee == "Payee "
@@ -164,7 +165,7 @@ defmodule JournalParserTest do
 		{:ok, _, {line_num, date, status, code, payee, comment}} =
 			ExParsec.parse_text "2015/02/15 ! (conf# abc-123) Payee", entry_header
 		assert line_num == 1
-		assert date == {2015, 2, 15}
+		assert date == %Date{year: 2015, month: 2, day: 15}
 		assert status == :uncleared
 		assert code == {:ok, "conf# abc-123"}
 		assert payee == "Payee"
@@ -175,7 +176,7 @@ defmodule JournalParserTest do
 		{:ok, _, {line_num, date, status, code, payee, comment}} =
 			ExParsec.parse_text "2015/02/15 * Payee ;Comment", entry_header
 		assert line_num == 1
-		assert date == {2015, 2, 15}
+		assert date == %Date{year: 2015, month: 2, day: 15}
 		assert status == :cleared
 		assert code == nil
 		assert payee == "Payee "
@@ -186,7 +187,7 @@ defmodule JournalParserTest do
 		{:ok, _, {line_num, date, status, code, payee, comment}} =
 			ExParsec.parse_text "2015/02/15 * Payee", entry_header
 		assert line_num == 1
-		assert date == {2015, 2, 15}
+		assert date == %Date{year: 2015, month: 2, day: 15}
 		assert status == :cleared
 		assert code == nil
 		assert payee == "Payee"
