@@ -9,8 +9,9 @@ To dos:
 [ ] Create data types for journal
 [ ] Update type specs in parser
 		[x] Date
-		[ ] EntryHeader
-			- Get rid of {:ok, blah} in optional fields
+		[x] EntryHeader
+		[ ] Amount
+		...?
 		[ ] Run dialyzer
 [ ] Update quantity parser
 		- Am I going to use a decimal library or roll my own "money" type?
