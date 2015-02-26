@@ -151,47 +151,48 @@ defmodule JournalParserTest do
 	# Entry Header Parser Tests
 
 	test "Full entry header" do
-		{:ok, _, {line_num, date, status, code, payee, comment}} =
-			ExParsec.parse_text "2015/02/15 * (conf# abc-123) Payee ;Comment", entry_header
-		assert line_num == 1
-		assert date == %Date{year: 2015, month: 2, day: 15}
-		assert status == :cleared
-		assert code == {:ok, "conf# abc-123"}
-		assert payee == "Payee "
-		assert comment == {:ok, "Comment"}
+		{:ok, _, header} = 
+			ExParsec.parse_text "2015/02/15 * (conf# abc-123) Payee ;Comment", 
+													entry_header
+		assert header.line_number == 1
+		assert header.date == %Date{year: 2015, month: 2, day: 15}
+		assert header.status == :cleared
+		assert header.code == {:ok, "conf# abc-123"}
+		assert header.payee == "Payee "
+		assert header.comment == {:ok, "Comment"}
 	end
 
 	test "Entry header with code and no comment" do
-		{:ok, _, {line_num, date, status, code, payee, comment}} =
+		{:ok, _, header} =
 			ExParsec.parse_text "2015/02/15 ! (conf# abc-123) Payee", entry_header
-		assert line_num == 1
-		assert date == %Date{year: 2015, month: 2, day: 15}
-		assert status == :uncleared
-		assert code == {:ok, "conf# abc-123"}
-		assert payee == "Payee"
-		assert comment == nil
+		assert header.line_number == 1
+		assert header.date == %Date{year: 2015, month: 2, day: 15}
+		assert header.status == :uncleared
+		assert header.code == {:ok, "conf# abc-123"}
+		assert header.payee == "Payee"
+		assert header.comment == nil
 	end
 
 	test "Entry header with comment and no code" do
-		{:ok, _, {line_num, date, status, code, payee, comment}} =
+		{:ok, _, header} =
 			ExParsec.parse_text "2015/02/15 * Payee ;Comment", entry_header
-		assert line_num == 1
-		assert date == %Date{year: 2015, month: 2, day: 15}
-		assert status == :cleared
-		assert code == nil
-		assert payee == "Payee "
-		assert comment == {:ok, "Comment"}
+		assert header.line_number == 1
+		assert header.date == %Date{year: 2015, month: 2, day: 15}
+		assert header.status == :cleared
+		assert header.code == nil
+		assert header.payee == "Payee "
+		assert header.comment == {:ok, "Comment"}
 	end
 
 	test "Entry header with no code or comment" do
-		{:ok, _, {line_num, date, status, code, payee, comment}} =
+		{:ok, _, header} =
 			ExParsec.parse_text "2015/02/15 * Payee", entry_header
-		assert line_num == 1
-		assert date == %Date{year: 2015, month: 2, day: 15}
-		assert status == :cleared
-		assert code == nil
-		assert payee == "Payee"
-		assert comment == nil
+		assert header.line_number == 1
+		assert header.date == %Date{year: 2015, month: 2, day: 15}
+		assert header.status == :cleared
+		assert header.code == nil
+		assert header.payee == "Payee"
+		assert header.comment == nil
 	end
 
 

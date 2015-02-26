@@ -4,6 +4,7 @@ defmodule JournalParser do
 	import ExParsec.Helpers
 	import Terminals
 	alias Types.Date
+	alias Types.EntryHeader
 
 	# Helpers
 
@@ -144,10 +145,7 @@ defmodule JournalParser do
 	@doc """
 	Expects and parses an entry header (first line).
 	"""
-	@spec entry_header() :: 
-				ExParsec.t(term(), {integer(), {integer(), integer(), integer()},
-									 String.t(), {:ok, String.t()} | nil, String.t(),
-									 {:ok, String.t()} | nil})
+	@spec entry_header() :: ExParsec.t(term(), EntryHeader.t())
 	defmparser entry_header() do
 		line_num <- line_number()
 		date <- date()
@@ -159,7 +157,12 @@ defmodule JournalParser do
 		payee <- payee()
 		comment <- option(comment())
 
-		return {line_num, date, status, code, payee, comment}
+		return %EntryHeader{line_number: line_num,
+											  date: date,
+											  status: status,
+											  code: code,
+											  payee: payee,
+											  comment: comment}
 	end
 
 
