@@ -157,9 +157,9 @@ defmodule JournalParserTest do
 		assert header.line_number == 1
 		assert header.date == %Date{year: 2015, month: 2, day: 15}
 		assert header.status == :cleared
-		assert header.code == {:ok, "conf# abc-123"}
+		assert header.code == "conf# abc-123"
 		assert header.payee == "Payee "
-		assert header.comment == {:ok, "Comment"}
+		assert header.comment == "Comment"
 	end
 
 	test "Entry header with code and no comment" do
@@ -168,7 +168,7 @@ defmodule JournalParserTest do
 		assert header.line_number == 1
 		assert header.date == %Date{year: 2015, month: 2, day: 15}
 		assert header.status == :uncleared
-		assert header.code == {:ok, "conf# abc-123"}
+		assert header.code == "conf# abc-123"
 		assert header.payee == "Payee"
 		assert header.comment == nil
 	end
@@ -181,7 +181,7 @@ defmodule JournalParserTest do
 		assert header.status == :cleared
 		assert header.code == nil
 		assert header.payee == "Payee "
-		assert header.comment == {:ok, "Comment"}
+		assert header.comment == "Comment"
 	end
 
 	test "Entry header with no code or comment" do

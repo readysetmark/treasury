@@ -9,6 +9,19 @@ defmodule JournalParser do
 	# Helpers
 
 	@doc """
+	Extracts value from the result of applying an optional parser.
+	An optional parser returns {:ok, <value>} or nil. This function will return
+	<value> or nil.
+	"""
+	@spec get_optional(v :: {:ok, any()} | nil) :: any()
+	def get_optional(v) do
+		case v do
+			{:ok, val} -> val
+			_ -> nil
+		end
+	end
+
+	@doc """
 	Whitespace.
 	"""
 	@spec whitespace() :: ExParsec.t(term(), :whitespace | :no_whitespace)
@@ -160,9 +173,9 @@ defmodule JournalParser do
 		return %EntryHeader{line_number: line_num,
 											  date: date,
 											  status: status,
-											  code: code,
+											  code: get_optional(code),
 											  payee: payee,
-											  comment: comment}
+											  comment: get_optional(comment)}
 	end
 
 
