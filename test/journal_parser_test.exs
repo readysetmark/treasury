@@ -1,6 +1,7 @@
 defmodule JournalParserTest do
 	use ExUnit.Case, async: true
 	import JournalParser
+	alias Decimal, as: D
 	alias Types.Date
 
 	# Helpers Tests
@@ -221,62 +222,24 @@ defmodule JournalParserTest do
 
 	# Quantity Parser Tests
 
-	test "Negative sign" do
-		{:ok, _, sign} = ExParsec.parse_text "-", sign
-		assert sign == :negative
-	end
-
-	test "Positive sign" do
-		{:ok, _, sign} = ExParsec.parse_text "", sign
-		assert sign == :positive
-	end
-
-	test "Simple integer" do
-		{:ok, _, int} = ExParsec.parse_text "43", integer
-		assert int == "43"
-	end
-
-	test "Integer with separator" do
-		{:ok, _, int} = ExParsec.parse_text "1,204", integer
-		assert int == "1,204"
-	end
-
-	test "Fractional part (two digits)" do
-		{:ok, _, frac} = ExParsec.parse_text ".98", fractional_part
-		assert frac == "98"
-	end
-
-	test "Fractional part (three digits)" do
-		{:ok, _, frac} = ExParsec.parse_text ".806", fractional_part
-		assert frac == "806"
-	end
-
 	test "Negative quantity with no fractional part" do
-		{:ok, _, {sign, int, frac}} = ExParsec.parse_text "-1,110", quantity
-		assert sign == :negative
-		assert int == "1,110"
-		assert frac == nil
+		{:ok, _, qty} = ExParsec.parse_text "-1,110", quantity
+		assert qty == D.new("-1110")
 	end
 
 	test "Positive quantity with no factional part" do
-		{:ok, _, {sign, int, frac}} = ExParsec.parse_text "2,314", quantity
-		assert sign == :positive
-		assert int == "2,314"
-		assert frac == nil
+		{:ok, _, qty} = ExParsec.parse_text "2,314", quantity
+		assert qty == D.new("2314")
 	end
 
 	test "Negative quantity with fractional part" do
-		{:ok, _, {sign, int, frac}} = ExParsec.parse_text "-1,110.38", quantity
-		assert sign == :negative
-		assert int == "1,110"
-		assert frac == {:ok, "38"}
+		{:ok, _, qty} = ExParsec.parse_text "-1,110.38", quantity
+		assert qty == D.new("-1110.38")
 	end
 
 	test "Positive quantity with factional part" do
-		{:ok, _, {sign, int, frac}} = ExParsec.parse_text "24521.793", quantity
-		assert sign == :positive
-		assert int == "24521"
-		assert frac == {:ok, "793"}
+		{:ok, _, qty} = ExParsec.parse_text "24521.793", quantity
+		assert qty == D.new("24521.793")
 	end
 
 
@@ -330,42 +293,42 @@ defmodule JournalParserTest do
 	test "Amount symbol then quantity with whitespace" do
 		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$ 13,245.00", amount_symbol_then_quantity
 		assert desc == :symbol_left_with_space
-		assert qty == {:positive, "13,245", {:ok, "00"}}
+		assert qty == D.new("13245.00")
 		assert symbol == {:unquoted, "$"}
 	end
 
 	test "Amount symbol then quantity no whitespace" do
 		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$13,245.00", amount_symbol_then_quantity
 		assert desc == :symbol_left_no_space
-		assert qty == {:positive, "13,245", {:ok, "00"}}
+		assert qty == D.new("13245.00")
 		assert symbol == {:unquoted, "$"}
 	end
 
 	test "Amount quantity then symbol with whitespace" do
 		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "13,245.463 AAPL", amount_quantity_then_symbol
 		assert desc == :symbol_right_with_space
-		assert qty == {:positive, "13,245", {:ok, "463"}}
+		assert qty == D.new("13245.463")
 		assert symbol == {:unquoted, "AAPL"}
 	end
 
 	test "Amount quantity then symbol no whitespace" do
 		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "13,245.463\"MUTF803\"", amount_quantity_then_symbol
 		assert desc == :symbol_right_no_space
-		assert qty == {:positive, "13,245", {:ok, "463"}}
+		assert qty == D.new("13245.463")
 		assert symbol == {:quoted, "MUTF803"}
 	end
 
 	test "Amount $13,255.22" do
 		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$13,255.22", amount
 		assert desc == :symbol_left_no_space
-		assert qty == {:positive, "13,255", {:ok, "22"}}
+		assert qty == D.new("13255.22")
 		assert symbol == {:unquoted, "$"}
 	end
 
 	test "Amount 4.256 \"MUTF514\"" do
 		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "4.256 \"MUTF514\"", amount
 		assert desc == :symbol_right_with_space
-		assert qty == {:positive, "4", {:ok, "256"}}
+		assert qty == D.new("4.256")
 		assert symbol == {:quoted, "MUTF514"}
 	end
 

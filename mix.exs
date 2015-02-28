@@ -25,6 +25,7 @@ defmodule Treasury.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    [{:ex_parsec, git: "https://github.com/alexrp/ex_parsec.git"}]
+    [{:ex_parsec, git: "https://github.com/alexrp/ex_parsec.git"},
+     {:decimal, "~> 1.1.0"}]
   end
 end

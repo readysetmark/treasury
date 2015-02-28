@@ -3,8 +3,10 @@ defmodule JournalParser do
 	import ExParsec.Text
 	import ExParsec.Helpers
 	import Terminals
+	alias Decimal, as: D
 	alias Types.Date
 	alias Types.EntryHeader
+
 
 	# Helpers
 
@@ -13,11 +15,11 @@ defmodule JournalParser do
 	An optional parser returns {:ok, <value>} or nil. This function will return
 	<value> or nil.
 	"""
-	@spec get_optional(v :: {:ok, any()} | nil) :: any()
-	def get_optional(v) do
-		case v do
-			{:ok, val} -> val
-			_ -> nil
+	@spec get_optional(val :: {:ok, any()} | nil, default :: any()) :: any()
+	def get_optional(val, default \\ nil) do
+		case val do
+			{:ok, v} -> v
+			_				 -> default
 		end
 	end
 
@@ -204,50 +206,19 @@ defmodule JournalParser do
 	# Quantity Parsers
 
 	@doc """
-	Expects and parses an optional negative sign. If sign not provided, :positive is assumed.
+	Expects and parses a numeric quantity and returns a Decimal.
 	"""
-	@spec sign() :: ExParsec.t(term(), :positive | :negative)
-	defmparser sign() do
-		neg_sign <- option(satisfy("negative sign", &dash/1))
-
-		case neg_sign do
-			{:ok, "-"} -> return :negative
-			_ 				 -> return :positive
-		end
-	end
-
-	@doc """
-	Expects and parses an integer (allows comma-separators).
-	"""
-	@spec integer() :: ExParsec.t(term(), String.t())
-	defmparser integer() do
-		first_digit <- digit()
-		digit_list <- many(either(digit(), char(",")))
-
-		return Enum.join([first_digit|digit_list])
-	end
-
-	@doc """
-	Expects and parses a fractional part.
-	"""
-	@spec fractional_part() :: ExParsec.t(term(), String.t())
-	defmparser fractional_part() do
-		char(".")
-		digit_list <- many1(digit())
-
-		return Enum.join(digit_list)
-	end
-
-	@doc """
-	Expects and parses a negative or positive quantity which may have a fractional part.
-	"""
-	@spec quantity() :: ExParsec.t(term(), {String.t(), String.t(), {:ok, String.t()} | nil})
+	@spec quantity() :: ExParsec.t(term(), D.t())
 	defmparser quantity() do
-		sign <- sign()
-		integer_part <- integer()
-		fractional_part <- option(fractional_part())
+		neg_sign <- option(satisfy("negative sign", &dash/1))
+		first_digit <- digit()
+		char_list <- many(choice([digit(), char(","), char(".")]))
 
-		return {sign, integer_part, fractional_part}
+		[get_optional(neg_sign, ""), first_digit, char_list]
+		|> Enum.join
+		|> String.replace(",", "")
+		|> D.new()
+		|> return
 	end
 
 
