@@ -1,38 +1,38 @@
 defmodule JournalParserTest do
 	use ExUnit.Case, async: true
-	import JournalParser
 	alias Decimal, as: D
+	alias JournalParser, as: P
 	alias Types.Date
 
 	# Helpers Tests
 
 	test "Whitespace just spaces" do
-		{:ok, _, result} = ExParsec.parse_text "   ", whitespace
+		{:ok, _, result} = ExParsec.parse_text "   ", P.whitespace
 		assert result == :whitespace
 	end
 
 	test "Whitespace just tabs" do
-		{:ok, _, result} = ExParsec.parse_text "\t\t\t", whitespace
+		{:ok, _, result} = ExParsec.parse_text "\t\t\t", P.whitespace
 		assert result == :whitespace
 	end
 
 	test "Whitespace tabs and spaces" do
-		{:ok, _, result} = ExParsec.parse_text " \t\t  ", whitespace
+		{:ok, _, result} = ExParsec.parse_text " \t\t  ", P.whitespace
 		assert result == :whitespace
 	end
 
 	test "Whitespace nothing" do
-		{:ok, _, result} = ExParsec.parse_text "", whitespace
+		{:ok, _, result} = ExParsec.parse_text "", P.whitespace
 		assert result == :no_whitespace
 	end
 
 	test "Mandatory whitespace" do
-		{:ok, _, result} = ExParsec.parse_text " ", mandatory_whitespace
+		{:ok, _, result} = ExParsec.parse_text " ", P.mandatory_whitespace
 		assert result == :whitespace
 	end
 
 	test "Mandatory whitespace missing" do
-		{result, _} = ExParsec.parse_text "", mandatory_whitespace
+		{result, _} = ExParsec.parse_text "", P.mandatory_whitespace
 		assert result == :error
 	end
 
@@ -40,7 +40,7 @@ defmodule JournalParserTest do
 	# Line Number Parser Tests
 
 	test "First line is 1" do
-		{:ok, _, line_num} = ExParsec.parse_text "One Line", line_number
+		{:ok, _, line_num} = ExParsec.parse_text "One Line", P.line_number
 		assert line_num == 1
 	end
 
@@ -48,29 +48,29 @@ defmodule JournalParserTest do
 	# Date Parser Tests
 
 	test "Parse 4-digit year" do
-		{:ok, _, year} = ExParsec.parse_text "2015", year
+		{:ok, _, year} = ExParsec.parse_text "2015", P.year
 		assert year == 2015
 	end
 
 	test "Parse 2-digit month" do
-		{:ok, _, month} = ExParsec.parse_text "02", month
+		{:ok, _, month} = ExParsec.parse_text "02", P.month
 		assert month == 2
 	end
 
 	test "Parse 2-digit day" do
-		{:ok, _, day} = ExParsec.parse_text "14", day
+		{:ok, _, day} = ExParsec.parse_text "14", P.day
 		assert day == 14
 	end
 
 	test "Parse date with slashes" do
-		{:ok, _, date} = ExParsec.parse_text "2015/02/14", date
+		{:ok, _, date} = ExParsec.parse_text "2015/02/14", P.date
 		assert date.year == 2015
 		assert date.month == 2
 		assert date.day == 14
 	end
 
 	test "Parse date with dashes" do
-		{:ok, _, date} = ExParsec.parse_text "2015-02-14", date
+		{:ok, _, date} = ExParsec.parse_text "2015-02-14", P.date
 		assert date.year == 2015
 		assert date.month == 2
 		assert date.day == 14
@@ -80,12 +80,12 @@ defmodule JournalParserTest do
 	# Entry Status Parser Tests
 
 	test "* denotes cleared entry" do
-		{:ok, _, status} = ExParsec.parse_text "*", entry_status
+		{:ok, _, status} = ExParsec.parse_text "*", P.entry_status
 		assert status == :cleared
 	end
 
 	test "! denotes uncleared entry" do
-		{:ok, _, status} = ExParsec.parse_text "!", entry_status
+		{:ok, _, status} = ExParsec.parse_text "!", P.entry_status
 		assert status == :uncleared
 	end
 
@@ -93,17 +93,17 @@ defmodule JournalParserTest do
 	# Code Parser Tests
 
 	test "Long entry code" do
-		{:ok, _, code} = ExParsec.parse_text "(conf# ABC-123-def)", code
+		{:ok, _, code} = ExParsec.parse_text "(conf# ABC-123-def)", P.code
 		assert code == "conf# ABC-123-def"
 	end
 
 	test "Short entry code" do
-		{:ok, _, code} = ExParsec.parse_text "(89)", code
+		{:ok, _, code} = ExParsec.parse_text "(89)", P.code
 		assert code == "89"
 	end
 
 	test "Empty code" do
-		{:ok, _, code} = ExParsec.parse_text "()", code
+		{:ok, _, code} = ExParsec.parse_text "()", P.code
 		assert code == ""
 	end
 
@@ -111,22 +111,24 @@ defmodule JournalParserTest do
 	# Payee Parser Tests
 
 	test "Long payee" do
-		{:ok, _, payee} = ExParsec.parse_text "WonderMart - groceries, toiletries, kitchen supplies", payee
+		{:ok, _, payee} = 
+			ExParsec.parse_text "WonderMart - groceries, toiletries, kitchen supplies",
+													P.payee
 		assert payee == "WonderMart - groceries, toiletries, kitchen supplies"
 	end
 
 	test "Short payee" do
-		{:ok, _, payee} = ExParsec.parse_text "WonderMart", payee
+		{:ok, _, payee} = ExParsec.parse_text "WonderMart", P.payee
 		assert payee == "WonderMart"
 	end
 
 	test "Single character payee" do
-		{:ok, _, payee} = ExParsec.parse_text "Z", payee
+		{:ok, _, payee} = ExParsec.parse_text "Z", P.payee
 		assert payee == "Z"
 	end
 
 	test "Payee must have at least one character" do
-		{result, _} = ExParsec.parse_text "", payee
+		{result, _} = ExParsec.parse_text "", P.payee
 		assert result == :error
 	end
 
@@ -134,17 +136,17 @@ defmodule JournalParserTest do
 	# Comment Parser Tests
 
 	test "Comment with leading space" do
-		{:ok, _, comment} = ExParsec.parse_text "; Comment", comment
+		{:ok, _, comment} = ExParsec.parse_text "; Comment", P.comment
 		assert comment == " Comment"
 	end
 
 	test "Comment with no leading space" do
-		{:ok, _, comment} = ExParsec.parse_text ";Comment", comment
+		{:ok, _, comment} = ExParsec.parse_text ";Comment", P.comment
 		assert comment == "Comment"
 	end
 
 	test "Empty comment" do
-		{:ok, _, comment} = ExParsec.parse_text ";", comment
+		{:ok, _, comment} = ExParsec.parse_text ";", P.comment
 		assert comment == ""
 	end
 
@@ -154,7 +156,7 @@ defmodule JournalParserTest do
 	test "Full entry header" do
 		{:ok, _, header} = 
 			ExParsec.parse_text "2015/02/15 * (conf# abc-123) Payee ;Comment", 
-													entry_header
+													P.entry_header
 		assert header.line_number == 1
 		assert header.date == %Date{year: 2015, month: 2, day: 15}
 		assert header.status == :cleared
@@ -165,7 +167,7 @@ defmodule JournalParserTest do
 
 	test "Entry header with code and no comment" do
 		{:ok, _, header} =
-			ExParsec.parse_text "2015/02/15 ! (conf# abc-123) Payee", entry_header
+			ExParsec.parse_text "2015/02/15 ! (conf# abc-123) Payee", P.entry_header
 		assert header.line_number == 1
 		assert header.date == %Date{year: 2015, month: 2, day: 15}
 		assert header.status == :uncleared
@@ -176,7 +178,7 @@ defmodule JournalParserTest do
 
 	test "Entry header with comment and no code" do
 		{:ok, _, header} =
-			ExParsec.parse_text "2015/02/15 * Payee ;Comment", entry_header
+			ExParsec.parse_text "2015/02/15 * Payee ;Comment", P.entry_header
 		assert header.line_number == 1
 		assert header.date == %Date{year: 2015, month: 2, day: 15}
 		assert header.status == :cleared
@@ -187,7 +189,7 @@ defmodule JournalParserTest do
 
 	test "Entry header with no code or comment" do
 		{:ok, _, header} =
-			ExParsec.parse_text "2015/02/15 * Payee", entry_header
+			ExParsec.parse_text "2015/02/15 * Payee", P.entry_header
 		assert header.line_number == 1
 		assert header.date == %Date{year: 2015, month: 2, day: 15}
 		assert header.status == :cleared
@@ -200,22 +202,22 @@ defmodule JournalParserTest do
 	# Account Parser Tests
 
 	test "Sub-account is any alphanumeric" do
-		{:ok, _, sub} = ExParsec.parse_text "ABCabc123", sub_account
+		{:ok, _, sub} = ExParsec.parse_text "ABCabc123", P.sub_account
 		assert sub == "ABCabc123"
 	end
 
 	test "Sub-account can start with digit" do
-		{:ok, _, sub} = ExParsec.parse_text "123abcABC", sub_account
+		{:ok, _, sub} = ExParsec.parse_text "123abcABC", P.sub_account
 		assert sub == "123abcABC"
 	end
 
 	test "Multiple level account" do
-		{:ok, _, accounts} = ExParsec.parse_text "Expenses:Food:Groceries", account
+		{:ok, _, accounts} = ExParsec.parse_text "Expenses:Food:Groceries", P.account
 		assert accounts == ["Expenses", "Food", "Groceries"]
 	end
 
 	test "Single level account" do
-		{:ok, _, accounts} = ExParsec.parse_text "Expenses", account
+		{:ok, _, accounts} = ExParsec.parse_text "Expenses", P.account
 		assert accounts == ["Expenses"]
 	end
 
@@ -223,22 +225,22 @@ defmodule JournalParserTest do
 	# Quantity Parser Tests
 
 	test "Negative quantity with no fractional part" do
-		{:ok, _, qty} = ExParsec.parse_text "-1,110", quantity
+		{:ok, _, qty} = ExParsec.parse_text "-1,110", P.quantity
 		assert qty == D.new("-1110")
 	end
 
 	test "Positive quantity with no factional part" do
-		{:ok, _, qty} = ExParsec.parse_text "2,314", quantity
+		{:ok, _, qty} = ExParsec.parse_text "2,314", P.quantity
 		assert qty == D.new("2314")
 	end
 
 	test "Negative quantity with fractional part" do
-		{:ok, _, qty} = ExParsec.parse_text "-1,110.38", quantity
+		{:ok, _, qty} = ExParsec.parse_text "-1,110.38", P.quantity
 		assert qty == D.new("-1110.38")
 	end
 
 	test "Positive quantity with factional part" do
-		{:ok, _, qty} = ExParsec.parse_text "24521.793", quantity
+		{:ok, _, qty} = ExParsec.parse_text "24521.793", P.quantity
 		assert qty == D.new("24521.793")
 	end
 
@@ -246,43 +248,43 @@ defmodule JournalParserTest do
 	# Symbol Parser Tests
 
 	test "Quoted symbol \"MTF5004\"" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "\"MTF5004\"", quoted_symbol
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "\"MTF5004\"", P.quoted_symbol
 		assert type == :quoted
 		assert symbol == "MTF5004"
 	end
 
 	test "Unquoted symbol $" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "$", unquoted_symbol
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "$", P.unquoted_symbol
 		assert type == :unquoted
 		assert symbol == "$"
 	end
 
 	test "Unquoted symbol US$" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "US$", unquoted_symbol
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "US$", P.unquoted_symbol
 		assert type == :unquoted
 		assert symbol == "US$"
 	end
 
 	test "Unquoted symbol AAPL" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "AAPL", unquoted_symbol
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "AAPL", P.unquoted_symbol
 		assert type == :unquoted
 		assert symbol == "AAPL"
 	end
 
 	test "Unquoted symbol in $13,245.00" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "$13,245.00", unquoted_symbol
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "$13,245.00", P.unquoted_symbol
 		assert type == :unquoted
 		assert symbol == "$"
 	end
 
 	test "Symbol that is quoted" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "\"MUT231\"", symbol
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "\"MUT231\"", P.symbol
 		assert type == :quoted
 		assert symbol == "MUT231"
 	end
 
 	test "Symbol that is unquoted" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "$", symbol
+		{:ok, _, {type, symbol}} = ExParsec.parse_text "$", P.symbol
 		assert type == :unquoted
 		assert symbol == "$"
 	end
@@ -291,49 +293,49 @@ defmodule JournalParserTest do
 	# Amount Parser Tests
 
 	test "Amount symbol then quantity with whitespace" do
-		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$ 13,245.00", amount_symbol_then_quantity
+		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$ 13,245.00", P.amount_symbol_then_quantity
 		assert desc == :symbol_left_with_space
 		assert qty == D.new("13245.00")
 		assert symbol == {:unquoted, "$"}
 	end
 
 	test "Amount symbol then quantity no whitespace" do
-		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$13,245.00", amount_symbol_then_quantity
+		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$13,245.00", P.amount_symbol_then_quantity
 		assert desc == :symbol_left_no_space
 		assert qty == D.new("13245.00")
 		assert symbol == {:unquoted, "$"}
 	end
 
 	test "Amount quantity then symbol with whitespace" do
-		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "13,245.463 AAPL", amount_quantity_then_symbol
+		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "13,245.463 AAPL", P.amount_quantity_then_symbol
 		assert desc == :symbol_right_with_space
 		assert qty == D.new("13245.463")
 		assert symbol == {:unquoted, "AAPL"}
 	end
 
 	test "Amount quantity then symbol no whitespace" do
-		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "13,245.463\"MUTF803\"", amount_quantity_then_symbol
+		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "13,245.463\"MUTF803\"", P.amount_quantity_then_symbol
 		assert desc == :symbol_right_no_space
 		assert qty == D.new("13245.463")
 		assert symbol == {:quoted, "MUTF803"}
 	end
 
 	test "Amount $13,255.22" do
-		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$13,255.22", amount
+		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$13,255.22", P.amount
 		assert desc == :symbol_left_no_space
 		assert qty == D.new("13255.22")
 		assert symbol == {:unquoted, "$"}
 	end
 
 	test "Amount 4.256 \"MUTF514\"" do
-		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "4.256 \"MUTF514\"", amount
+		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "4.256 \"MUTF514\"", P.amount
 		assert desc == :symbol_right_with_space
 		assert qty == D.new("4.256")
 		assert symbol == {:quoted, "MUTF514"}
 	end
 
 	test "Amount inferred" do
-		{:ok, _, result} = ExParsec.parse_text "", amount
+		{:ok, _, result} = ExParsec.parse_text "", P.amount
 		assert result == :infer_amount
 	end
 

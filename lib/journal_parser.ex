@@ -2,8 +2,8 @@ defmodule JournalParser do
 	import ExParsec.Base
 	import ExParsec.Text
 	import ExParsec.Helpers
-	import Terminals
 	alias Decimal, as: D
+	alias Terminals, as: T
 	alias Types.Date
 	alias Types.EntryHeader
 
@@ -28,7 +28,7 @@ defmodule JournalParser do
 	"""
 	@spec whitespace() :: ExParsec.t(term(), :whitespace | :no_whitespace)
 	defmparser whitespace() do
-		list <- many(satisfy("whitespace", &whitespace/1))
+		list <- many(satisfy("whitespace", &T.whitespace/1))
 
 		case list do
 			_ when length(list) > 0 -> return :whitespace
@@ -41,7 +41,7 @@ defmodule JournalParser do
 	"""
 	@spec mandatory_whitespace() :: ExParsec.t(term(), :whitespace)
 	defmparser mandatory_whitespace() do
-		many1(satisfy("whitespace", &whitespace/1))
+		many1(satisfy("whitespace", &T.whitespace/1))
 		return :whitespace
 	end
 
@@ -92,9 +92,9 @@ defmodule JournalParser do
 	@spec date() :: ExParsec.t(term(), Date.t())
 	defmparser date() do
 		year <- year()
-		satisfy("date separator", &date_separator/1)
+		satisfy("date separator", &T.date_separator/1)
 		month <- month()
-		satisfy("date separator", &date_separator/1)
+		satisfy("date separator", &T.date_separator/1)
 		day <- day()
 		return %Date{year: year, month: month, day: day}
 	end
@@ -107,7 +107,7 @@ defmodule JournalParser do
 	"""
 	@spec entry_status() :: ExParsec.t(term(), :cleared | :uncleared)
 	defmparser entry_status() do
-		status <- satisfy("entry status flag", &entry_status/1)
+		status <- satisfy("entry status flag", &T.entry_status/1)
 
 		case status do
 			"*" -> return :cleared
@@ -123,9 +123,9 @@ defmodule JournalParser do
 	"""
 	@spec code() :: ExParsec.t(term(), String.t())
 	defmparser code() do
-		satisfy("(", &open_parenthesis/1)
-		code_list <- many(satisfy("code character", &code_character/1))
-		satisfy(")", &close_parenthesis/1)
+		satisfy("(", &T.open_parenthesis/1)
+		code_list <- many(satisfy("code character", &T.code_character/1))
+		satisfy(")", &T.close_parenthesis/1)
 		return Enum.join(code_list)
 	end
 
@@ -137,7 +137,7 @@ defmodule JournalParser do
 	"""
 	@spec payee() :: ExParsec.t(term(), String.t())
 	defmparser payee() do
-		payee_list <- many1(satisfy("payee character", &payee_character/1))
+		payee_list <- many1(satisfy("payee character", &T.payee_character/1))
 		return Enum.join(payee_list)
 	end
 
@@ -149,8 +149,8 @@ defmodule JournalParser do
 	"""
 	@spec comment() :: ExParsec.t(term(), String.t())
 	defmparser comment() do
-		satisfy(";", &semicolon/1)
-		comment_list <- many(satisfy("comment character", &comment_character/1))
+		satisfy(";", &T.semicolon/1)
+		comment_list <- many(satisfy("comment character", &T.comment_character/1))
 		return Enum.join(comment_list)
 	end
 
@@ -199,7 +199,7 @@ defmodule JournalParser do
 	"""
 	@spec account() :: ExParsec.t(term(), [String.t()])
 	defmparser account() do
-		sep_by1(sub_account(), satisfy("account separator", &colon/1))
+		sep_by1(sub_account(), satisfy("account separator", &T.colon/1))
 	end
 
 
@@ -210,7 +210,7 @@ defmodule JournalParser do
 	"""
 	@spec quantity() :: ExParsec.t(term(), D.t())
 	defmparser quantity() do
-		neg_sign <- option(satisfy("negative sign", &dash/1))
+		neg_sign <- option(satisfy("negative sign", &T.dash/1))
 		first_digit <- digit()
 		char_list <- many(choice([digit(), char(","), char(".")]))
 
@@ -229,9 +229,9 @@ defmodule JournalParser do
 	"""
 	@spec quoted_symbol() :: ExParsec.t(term(), {:quoted, String.t()})
 	defmparser quoted_symbol() do
-		satisfy("quote", &quote_terminal/1)
-		symbol_list <- many1(satisfy("quoted symbol character", &quoted_symbol_character/1))
-		satisfy("quote", &quote_terminal/1)
+		satisfy("quote", &T.quote_terminal/1)
+		symbol_list <- many1(satisfy("quoted symbol character", &T.quoted_symbol_character/1))
+		satisfy("quote", &T.quote_terminal/1)
 
 		return {:quoted, Enum.join(symbol_list)}
 	end
@@ -241,7 +241,7 @@ defmodule JournalParser do
 	"""
 	@spec unquoted_symbol() :: ExParsec.t(term(), {:unquoted, String.t()})
 	defmparser unquoted_symbol() do
-		symbol_list <- many1(satisfy("unquoted symbol character", &unquoted_symbol_character/1))
+		symbol_list <- many1(satisfy("unquoted symbol character", &T.unquoted_symbol_character/1))
 		return {:unquoted, Enum.join(symbol_list)}
 	end
 
