@@ -4,6 +4,7 @@ defmodule JournalParser do
 	import ExParsec.Helpers
 	alias Decimal, as: D
 	alias Terminals, as: T
+	alias Types
 	alias Types.Date
 	alias Types.EntryHeader
 
@@ -105,7 +106,7 @@ defmodule JournalParser do
 	@doc """
 	Expects and parses a entry status (cleared or uncleared).
 	"""
-	@spec entry_status() :: ExParsec.t(term(), :cleared | :uncleared)
+	@spec entry_status() :: ExParsec.t(term(), Types.status())
 	defmparser entry_status() do
 		status <- satisfy("entry status flag", &T.entry_status/1)
 
