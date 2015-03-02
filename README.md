@@ -10,9 +10,10 @@ To dos:
 		[x] Date
 		[x] EntryHeader
 		[x] Quantity
-		[ ] Status
-		[ ] Amount
+		[x] Status
+		[x] Symbol
+		[x] Amount
 		...?
 		[ ] Run dialyzer
-[ ] Roll comment block for Amount parsers into the @doc
+[x] Roll comment block for Amount parsers into the @doc
 

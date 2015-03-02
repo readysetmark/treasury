@@ -5,6 +5,8 @@ defmodule JournalParser do
 	alias Decimal, as: D
 	alias Terminals, as: T
 	alias Types
+	alias Types.Symbol
+	alias Types.Amount
 	alias Types.Date
 	alias Types.EntryHeader
 
@@ -228,7 +230,7 @@ defmodule JournalParser do
 	@doc """
 	Expects and parses a quoted symbol.
 	"""
-	@spec quoted_symbol() :: ExParsec.t(term(), {:quoted, String.t()})
+	@spec quoted_symbol() :: ExParsec.t(term(), Symbol.t())
 	defmparser quoted_symbol() do
 		satisfy("quote", &T.quote_terminal/1)
 		symbol_list <- many1(satisfy("quoted symbol character", &T.quoted_symbol_character/1))
@@ -240,7 +242,7 @@ defmodule JournalParser do
 	@doc """
 	Expects and parses an unquoted symbol. Unquoted symbols have a restricted character set.
 	"""
-	@spec unquoted_symbol() :: ExParsec.t(term(), {:unquoted, String.t()})
+	@spec unquoted_symbol() :: ExParsec.t(term(), Symbol.t())
 	defmparser unquoted_symbol() do
 		symbol_list <- many1(satisfy("unquoted symbol character", &T.unquoted_symbol_character/1))
 		return {:unquoted, Enum.join(symbol_list)}
@@ -249,7 +251,7 @@ defmodule JournalParser do
 	@doc """
 	Expects and parses a quoted or unquoted symbol.
 	"""
-	@spec symbol() :: ExParsec.t(term(), {:quoted | :unquoted, String.t()})
+	@spec symbol() :: ExParsec.t(term(), Symbol.t())
 	defmparser symbol() do
 		either(quoted_symbol(), unquoted_symbol())
 	end
@@ -257,18 +259,10 @@ defmodule JournalParser do
 
 	# Amount Parsers
 
-	# An amount is a quantity and a symbol representing the commodity.
-	# An amount may be specified the following ways:
-	#		{symbol}{quantity}  :: symbol on left with no whitespace between
-	#   {symbol} {quantity} :: symbol on left with whitespace between
-	#		{quantity}{symbol}  :: symbol on right with no whitespace between
-	#   {quantity} {symbol} :: sybmol on right with whitespace between
-
 	@doc """
 	Expects and parses an amount in the format of symbol then quantity.
 	"""
-	# !!! TODO: NEED TO DEFINE TYPE SPEC HERE !!!
-	#@spec amount_symbol_then_quantity() :: ExParsec.t(term(), )
+	@spec amount_symbol_then_quantity() :: ExParsec.t(term(), Amount.t())
 	defmparser amount_symbol_then_quantity() do
 		symbol <- symbol()
 		ws <- whitespace()
@@ -283,8 +277,7 @@ defmodule JournalParser do
 	@doc """
 	Expects and parses an amount in the format of quantity then symbol.
 	"""
-	# !!! TODO: NEED TO DEFINE TYPE SPEC HERE !!!
-	#@spec amount_quantity_then_symbol() :: ExParsec.t(term(), )
+	@spec amount_quantity_then_symbol() :: ExParsec.t(term(), Amount.t())
 	defmparser amount_quantity_then_symbol() do
 		qty <- quantity()
 		ws <- whitespace()
@@ -297,10 +290,18 @@ defmodule JournalParser do
 	end
 
 	@doc """
-	Expects and parses an amount.
+	Expects and parses an optional amount. If no amount is found, it is assumed to
+	be an inferred amount.
+
+	An amount is a quantity and a symbol representing the commodity. An amount may
+	be specified any of the following ways:
+
+		<symbol><quantity>  :: symbol on left with no whitespace between
+	  <symbol> <quantity> :: symbol on left with whitespace between
+		<quantity><symbol>  :: symbol on right with no whitespace between
+	  <quantity> <symbol> :: sybmol on right with whitespace between
 	"""
-	# !!! TODO: NEED TO DEFINE TYPE SPEC HERE !!!
-	#@spec amount() :: ExParsec.t(term(), )
+	@spec amount() :: ExParsec.t(term(), Amount.t() | :infer_amount)
 	defmparser amount() do
 		amount <- option(either(amount_symbol_then_quantity(), amount_quantity_then_symbol()))
 
