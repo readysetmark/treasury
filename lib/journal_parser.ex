@@ -26,6 +26,10 @@ defmodule JournalParser do
 		end
 	end
 
+
+
+	# Whitespace Parsers
+
 	@doc """
 	Whitespace.
 	"""
@@ -48,6 +52,8 @@ defmodule JournalParser do
 		return :whitespace
 	end
 
+
+
 	# Line Number Parser
 
 	@doc """
@@ -58,6 +64,7 @@ defmodule JournalParser do
 		pos <- get_position()
 		return pos.line
 	end
+
 
 
 	# Date Parsers
@@ -103,6 +110,7 @@ defmodule JournalParser do
 	end
 
 
+
 	# Entry Status Parser
 
 	@doc """
@@ -119,6 +127,7 @@ defmodule JournalParser do
 	end
 
 
+
 	# Code Parser
 
 	@doc """
@@ -133,6 +142,7 @@ defmodule JournalParser do
 	end
 
 
+
 	# Payee Parser
 
 	@doc """
@@ -143,6 +153,7 @@ defmodule JournalParser do
 		payee_list <- many1(satisfy("payee character", &T.payee_character/1))
 		return Enum.join(payee_list)
 	end
+
 
 
 	# Comment Parser
@@ -156,6 +167,7 @@ defmodule JournalParser do
 		comment_list <- many(satisfy("comment character", &T.comment_character/1))
 		return Enum.join(comment_list)
 	end
+
 
 
 	# Entry Header Parser
@@ -184,6 +196,7 @@ defmodule JournalParser do
 	end
 
 
+
 	# Account Parsers
 
 	# Very simple account parsers right now. Account must be alphanumeric.
@@ -206,6 +219,7 @@ defmodule JournalParser do
 	end
 
 
+
 	# Quantity Parsers
 
 	@doc """
@@ -223,6 +237,7 @@ defmodule JournalParser do
 		|> D.new()
 		|> return
 	end
+
 
 
 	# Symbol Parsers
@@ -255,6 +270,7 @@ defmodule JournalParser do
 	defmparser symbol() do
 		either(quoted_symbol(), unquoted_symbol())
 	end
+
 
 
 	# Amount Parsers

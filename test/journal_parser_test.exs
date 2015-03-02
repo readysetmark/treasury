@@ -4,7 +4,7 @@ defmodule JournalParserTest do
 	alias JournalParser, as: P
 	alias Types.Date
 
-	# Helpers Tests
+	# Whitespace Parsers Tests
 
 	test "Whitespace just spaces" do
 		{:ok, _, result} = ExParsec.parse_text "   ", P.whitespace
