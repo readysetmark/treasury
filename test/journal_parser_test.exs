@@ -3,6 +3,7 @@ defmodule JournalParserTest do
 	alias Decimal, as: D
 	alias JournalParser, as: P
 	alias Types.Date
+	alias Types.Symbol
 
 	# Whitespace Parsers Tests
 
@@ -248,90 +249,90 @@ defmodule JournalParserTest do
 	# Symbol Parser Tests
 
 	test "Quoted symbol \"MTF5004\"" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "\"MTF5004\"", P.quoted_symbol
-		assert type == :quoted
-		assert symbol == "MTF5004"
+		{:ok, _, symbol} = ExParsec.parse_text "\"MTF5004\"", P.quoted_symbol
+		assert symbol.value == "MTF5004"
+		assert symbol.quoted == true
 	end
 
 	test "Unquoted symbol $" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "$", P.unquoted_symbol
-		assert type == :unquoted
-		assert symbol == "$"
+		{:ok, _, symbol} = ExParsec.parse_text "$", P.unquoted_symbol
+		assert symbol.value == "$"
+		assert symbol.quoted == false
 	end
 
 	test "Unquoted symbol US$" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "US$", P.unquoted_symbol
-		assert type == :unquoted
-		assert symbol == "US$"
+		{:ok, _, symbol} = ExParsec.parse_text "US$", P.unquoted_symbol
+		assert symbol.value == "US$"
+		assert symbol.quoted == false
 	end
 
 	test "Unquoted symbol AAPL" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "AAPL", P.unquoted_symbol
-		assert type == :unquoted
-		assert symbol == "AAPL"
+		{:ok, _, symbol} = ExParsec.parse_text "AAPL", P.unquoted_symbol
+		assert symbol.value == "AAPL"
+		assert symbol.quoted == false
 	end
 
 	test "Unquoted symbol in $13,245.00" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "$13,245.00", P.unquoted_symbol
-		assert type == :unquoted
-		assert symbol == "$"
+		{:ok, _, symbol} = ExParsec.parse_text "$13,245.00", P.unquoted_symbol
+		assert symbol.value == "$"
+		assert symbol.quoted == false
 	end
 
 	test "Symbol that is quoted" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "\"MUT231\"", P.symbol
-		assert type == :quoted
-		assert symbol == "MUT231"
+		{:ok, _, symbol} = ExParsec.parse_text "\"MUT231\"", P.symbol
+		assert symbol.value == "MUT231"
+		assert symbol.quoted == true
 	end
 
 	test "Symbol that is unquoted" do
-		{:ok, _, {type, symbol}} = ExParsec.parse_text "$", P.symbol
-		assert type == :unquoted
-		assert symbol == "$"
+		{:ok, _, symbol} = ExParsec.parse_text "$", P.symbol
+		assert symbol.value == "$"
+		assert symbol.quoted == false
 	end
 
 
 	# Amount Parser Tests
 
 	test "Amount symbol then quantity with whitespace" do
-		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$ 13,245.00", P.amount_symbol_then_quantity
-		assert desc == :symbol_left_with_space
-		assert qty == D.new("13245.00")
-		assert symbol == {:unquoted, "$"}
+		{:ok, _, amount} = ExParsec.parse_text "$ 13,245.00", P.amount_symbol_then_quantity
+		assert amount.qty == D.new("13245.00")
+		assert amount.symbol == %Symbol{value: "$", quoted: false}
+		assert amount.format == :symbol_left_with_space
 	end
 
 	test "Amount symbol then quantity no whitespace" do
-		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$13,245.00", P.amount_symbol_then_quantity
-		assert desc == :symbol_left_no_space
-		assert qty == D.new("13245.00")
-		assert symbol == {:unquoted, "$"}
+		{:ok, _, amount} = ExParsec.parse_text "$13,245.00", P.amount_symbol_then_quantity
+		assert amount.qty == D.new("13245.00")
+		assert amount.symbol == %Symbol{value: "$", quoted: false}
+		assert amount.format == :symbol_left_no_space
 	end
 
 	test "Amount quantity then symbol with whitespace" do
-		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "13,245.463 AAPL", P.amount_quantity_then_symbol
-		assert desc == :symbol_right_with_space
-		assert qty == D.new("13245.463")
-		assert symbol == {:unquoted, "AAPL"}
+		{:ok, _, amount} = ExParsec.parse_text "13,245.463 AAPL", P.amount_quantity_then_symbol
+		assert amount.qty == D.new("13245.463")
+		assert amount.symbol == %Symbol{value: "AAPL", quoted: false}
+		assert amount.format == :symbol_right_with_space
 	end
 
 	test "Amount quantity then symbol no whitespace" do
-		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "13,245.463\"MUTF803\"", P.amount_quantity_then_symbol
-		assert desc == :symbol_right_no_space
-		assert qty == D.new("13245.463")
-		assert symbol == {:quoted, "MUTF803"}
+		{:ok, _, amount} = ExParsec.parse_text "13,245.463\"MUTF803\"", P.amount_quantity_then_symbol
+		assert amount.qty == D.new("13245.463")
+		assert amount.symbol == %Symbol{value: "MUTF803", quoted: true}
+		assert amount.format == :symbol_right_no_space
 	end
 
 	test "Amount $13,255.22" do
-		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "$13,255.22", P.amount
-		assert desc == :symbol_left_no_space
-		assert qty == D.new("13255.22")
-		assert symbol == {:unquoted, "$"}
+		{:ok, _, amount} = ExParsec.parse_text "$13,255.22", P.amount
+		assert amount.qty == D.new("13255.22")
+		assert amount.symbol == %Symbol{value: "$", quoted: false}
+		assert amount.format == :symbol_left_no_space
 	end
 
 	test "Amount 4.256 \"MUTF514\"" do
-		{:ok, _, {desc, qty, symbol}} = ExParsec.parse_text "4.256 \"MUTF514\"", P.amount
-		assert desc == :symbol_right_with_space
-		assert qty == D.new("4.256")
-		assert symbol == {:quoted, "MUTF514"}
+		{:ok, _, amount} = ExParsec.parse_text "4.256 \"MUTF514\"", P.amount
+		assert amount.qty == D.new("4.256")
+		assert amount.symbol == %Symbol{value: "MUTF514", quoted: true}
+		assert amount.format == :symbol_right_with_space
 	end
 
 	test "Amount inferred" do

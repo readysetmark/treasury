@@ -3,11 +3,10 @@ defmodule Types do
 	@type status :: :uncleared | :cleared
 
 	defmodule Symbol do
-		defstruct format: nil,
-							symbol: nil
+		defstruct value: nil,
+							quoted: nil
 
-		@type t :: %__MODULE__{format: :quoted | :unquoted,
-													 symbol: String.t()}
+		@type t :: %__MODULE__{value: String.t(), quoted: boolean()}
 	end
 
 
@@ -15,16 +14,16 @@ defmodule Types do
 		alias Decimal
 		alias Types.Symbol
 
-		defstruct format: nil,
-							qty: nil,
-							symbol: nil
+		defstruct qty: nil,
+							symbol: nil,
+							format: nil
 
-		@type t :: %__MODULE__{format: :symbol_right_with_space 
+		@type t :: %__MODULE__{qty: Decimal.t(),
+									 				 symbol: Symbol.t(),
+									 				 format: :symbol_right_with_space 
 																	 | :symbol_right_no_space
 									 								 | :symbol_left_with_space
-									 								 | :symbol_left_no_space,
-									 				 qty: Decimal.t(),
-									 				 symbol: Symbol.t()}
+									 								 | :symbol_left_no_space}
 	end
 
 

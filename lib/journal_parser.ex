@@ -251,7 +251,7 @@ defmodule JournalParser do
 		symbol_list <- many1(satisfy("quoted symbol character", &T.quoted_symbol_character/1))
 		satisfy("quote", &T.quote_terminal/1)
 
-		return {:quoted, Enum.join(symbol_list)}
+		return %Symbol{value: Enum.join(symbol_list), quoted: true}
 	end
 
 	@doc """
@@ -260,7 +260,7 @@ defmodule JournalParser do
 	@spec unquoted_symbol() :: ExParsec.t(term(), Symbol.t())
 	defmparser unquoted_symbol() do
 		symbol_list <- many1(satisfy("unquoted symbol character", &T.unquoted_symbol_character/1))
-		return {:unquoted, Enum.join(symbol_list)}
+		return %Symbol{value: Enum.join(symbol_list), quoted: false}
 	end
 
 	@doc """
@@ -285,8 +285,12 @@ defmodule JournalParser do
 		qty <- quantity()
 
 		case ws do
-			:whitespace    -> return {:symbol_left_with_space, qty, symbol}
-			:no_whitespace -> return {:symbol_left_no_space, qty, symbol}
+			:whitespace    -> return %Amount{qty: qty,
+																			 symbol: symbol,
+																			 format: :symbol_left_with_space}
+			:no_whitespace -> return %Amount{qty: qty,
+																			 symbol: symbol,
+																			 format: :symbol_left_no_space}
 		end
 	end
 
@@ -300,8 +304,12 @@ defmodule JournalParser do
 		symbol <- symbol()
 
 		case ws do
-			:whitespace	   -> return {:symbol_right_with_space, qty, symbol}
-			:no_whitespace -> return {:symbol_right_no_space, qty, symbol}
+			:whitespace	   -> return %Amount{qty: qty,
+																			 symbol: symbol,
+																			 format: :symbol_right_with_space}
+			:no_whitespace -> return %Amount{qty: qty,
+																			 symbol: symbol,
+																			 format: :symbol_right_no_space}
 		end
 	end
 
