@@ -9,6 +9,7 @@ defmodule JournalParser do
 	alias Types.Amount
 	alias Types.Date
 	alias Types.EntryHeader
+	alias Types.EntryLine
 
 
 	# Helpers
@@ -333,6 +334,29 @@ defmodule JournalParser do
 			{:ok, amount} -> return amount
 			nil           -> return :infer_amount
 		end
+	end
+
+
+
+	# Entry Line Parser
+
+	@doc """
+	Expects and parses an entry line.
+	"""
+	@spec entry_line() :: ExParsec.t(term(), EntryLine.t())
+	defmparser entry_line() do
+		line_num <- line_number()
+		mandatory_whitespace()
+		account <- account()
+		whitespace()
+		amount <- amount()
+		comment <- option(pair_right(whitespace(), comment()))
+
+		return %EntryLine{header: nil,
+											line_number: line_num,
+											account: account,
+											amount: amount,
+											comment: get_optional(comment)}
 	end
 
 end

@@ -2,6 +2,7 @@ defmodule JournalParserTest do
 	use ExUnit.Case, async: true
 	alias Decimal, as: D
 	alias JournalParser, as: P
+	alias Types.Amount
 	alias Types.Date
 	alias Types.Symbol
 
@@ -338,6 +339,80 @@ defmodule JournalParserTest do
 	test "Amount inferred" do
 		{:ok, _, result} = ExParsec.parse_text "", P.amount
 		assert result == :infer_amount
+	end
+
+
+	# Entry Line Parser Tests
+
+	test "Entry line with all components" do
+		{:ok, _, entry} = ExParsec.parse_text "\tAssets:Savings\t$45.00\t;comment", P.entry_line
+		assert entry.header == nil
+		assert entry.line_number == 1
+		assert entry.account == ["Assets", "Savings"]
+		assert entry.amount == %Amount{qty: D.new("45.00"),
+																	 symbol: %Symbol{value: "$", quoted: false},
+																	 format: :symbol_left_no_space}
+		assert entry.comment == "comment"
+	end
+
+	test "Entry line with all components -- commodity" do
+		{:ok, _, entry} = ExParsec.parse_text "\tAssets:Investments\t13.508 \"MUTF514\"\t;comment", P.entry_line
+		assert entry.header == nil
+		assert entry.line_number == 1
+		assert entry.account == ["Assets", "Investments"]
+		assert entry.amount == %Amount{qty: D.new("13.508"),
+																	 symbol: %Symbol{value: "MUTF514", quoted: true},
+																	 format: :symbol_right_with_space}
+		assert entry.comment == "comment"
+	end
+
+	test "Entry line with whitespace but no comment" do
+		{:ok, _, entry} = ExParsec.parse_text "\tAssets:Savings\t$45.00\t", P.entry_line
+		assert entry.header == nil
+		assert entry.line_number == 1
+		assert entry.account == ["Assets", "Savings"]
+		assert entry.amount == %Amount{qty: D.new("45.00"),
+																	 symbol: %Symbol{value: "$", quoted: false},
+																	 format: :symbol_left_no_space}
+		assert entry.comment == nil
+	end
+
+	test "Entry line with no whitespace or comment" do
+		{:ok, _, entry} = ExParsec.parse_text "\tAssets:Savings\t$45.00", P.entry_line
+		assert entry.header == nil
+		assert entry.line_number == 1
+		assert entry.account == ["Assets", "Savings"]
+		assert entry.amount == %Amount{qty: D.new("45.00"),
+																	 symbol: %Symbol{value: "$", quoted: false},
+																	 format: :symbol_left_no_space}
+		assert entry.comment == nil
+	end
+
+	test "Entry line with inferred amount" do
+		{:ok, _, entry} = ExParsec.parse_text " Assets:Savings ;comment ", P.entry_line
+		assert entry.header == nil
+		assert entry.line_number == 1
+		assert entry.account == ["Assets", "Savings"]
+		assert entry.amount == :infer_amount
+		assert entry.comment == "comment "
+	end
+
+	test "Entry line with inferred amount, whitespace, no comment" do
+		{:ok, _, entry} = ExParsec.parse_text " Assets:Savings ", P.entry_line
+		assert entry.header == nil
+		assert entry.line_number == 1
+		assert entry.account == ["Assets", "Savings"]
+		assert entry.amount == :infer_amount
+		assert entry.comment == nil
+	end
+
+	test "Entry line with inferred amount, no whitespace, no comment" do
+		{:ok, _, entry} = ExParsec.parse_text " Assets:Savings", P.entry_line
+		assert entry.header == nil
+		assert entry.line_number == 1
+		assert entry.account == ["Assets", "Savings"]
+		assert entry.amount == :infer_amount
+		assert entry.comment == nil
 	end
 
 end

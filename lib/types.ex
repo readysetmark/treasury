@@ -57,4 +57,22 @@ defmodule Types do
 													 comment: String.t()}
 	end
 
+
+	defmodule EntryLine do
+		alias Types.Amount
+		alias Types.EntryHeader
+
+		defstruct header: nil,
+							line_number: nil,
+							account: nil,
+							amount: nil,
+							comment: nil
+
+		@type t :: %__MODULE__{header: EntryHeader.t(),
+													 line_number: integer(),
+													 account: [String.t()],
+													 amount: Amount.t(),
+													 comment: String.t()}
+	end
+
 end
