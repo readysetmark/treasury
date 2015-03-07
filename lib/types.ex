@@ -20,10 +20,10 @@ defmodule Types do
 
 		@type t :: %__MODULE__{qty: Decimal.t(),
 									 				 symbol: Symbol.t(),
-									 				 format: :symbol_right_with_space 
-																	 | :symbol_right_no_space
-									 								 | :symbol_left_with_space
-									 								 | :symbol_left_no_space}
+									 				 format: :symbol_right_with_space |
+									 				 				 :symbol_right_no_space |
+									 				 				 :symbol_left_with_space |
+									 				 				 :symbol_left_no_space}
 	end
 
 
@@ -38,7 +38,10 @@ defmodule Types do
 	end
 
 
-	defmodule EntryHeader do
+	defmodule Header do
+		@moduledoc """
+		Defines a transaction header.
+		"""
 		alias Types
 		alias Types.Date
 
@@ -58,9 +61,12 @@ defmodule Types do
 	end
 
 
-	defmodule EntryLine do
+	defmodule Posting do
+		@moduledoc """
+		Defines a posting within a transaction.
+		"""
 		alias Types.Amount
-		alias Types.EntryHeader
+		alias Types.Header
 
 		defstruct header: nil,
 							line_number: nil,
@@ -68,18 +74,18 @@ defmodule Types do
 							amount: nil,
 							comment: nil
 
-		@type t :: %__MODULE__{header: EntryHeader.t(),
+		@type t :: %__MODULE__{header: Header.t(),
 													 line_number: integer(),
 													 account: [String.t()],
 													 amount: Amount.t(),
 													 comment: String.t()}
 
 		@doc """
-		Returns `true` if argument is an EntryLine; otherwise `false`.
+		Returns `true` if argument is a Posting; otherwise `false`.
 		"""
-		@spec entry_line?(any) :: boolean
-		def entry_line?(%EntryLine{}), do: true
-		def entry_line?(_), 					 do: false
+		@spec posting?(any) :: boolean
+		def posting?(%Posting{}), do: true
+		def posting?(_), 					do: false
 	end
 
 end

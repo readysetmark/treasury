@@ -6,7 +6,8 @@ Treasury
 
 To dos:
 [ ] finish parser
-	[ ] flesh out entry tests
-	[ ] change terminology to transaction and posting
+	[ ] flesh out transaction tests
+	[ ] create transaction type
+	[ ] push header into postings
 	[ ] use erlang calendar date type?
 [ ] flesh out tasks

@@ -8,8 +8,8 @@ defmodule JournalParser do
 	alias Types.Symbol
 	alias Types.Amount
 	alias Types.Date
-	alias Types.EntryHeader
-	alias Types.EntryLine
+	alias Types.Header
+	alias Types.Posting
 
 
 	# Helpers
@@ -144,14 +144,14 @@ defmodule JournalParser do
 
 
 
-	# Entry Status Parser
+	# Transaction Status Parser
 
 	@doc """
-	Expects and parses a entry status (cleared or uncleared).
+	Expects and parses a transaction status (cleared or uncleared).
 	"""
-	@spec entry_status() :: ExParsec.t(term(), Types.status())
-	defmparser entry_status() do
-		status <- satisfy("entry status flag", &T.entry_status/1)
+	@spec transaction_status() :: ExParsec.t(term(), Types.status())
+	defmparser transaction_status() do
+		status <- satisfy("transaction status flag", &T.transaction_status/1)
 
 		case status do
 			"*" -> return :cleared
@@ -164,7 +164,7 @@ defmodule JournalParser do
 	# Code Parser
 
 	@doc """
-	Expects and parses an entry code between parentheses.
+	Expects and parses an transaction code between parentheses.
 	"""
 	@spec code() :: ExParsec.t(term(), String.t())
 	defmparser code() do
@@ -203,29 +203,29 @@ defmodule JournalParser do
 
 
 
-	# Entry Header Parser
+	# Transaction Header Parser
 
 	@doc """
-	Expects and parses an entry header (first line).
+	Expects and parses an transaction header (first line).
 	"""
-	@spec entry_header() :: ExParsec.t(term(), EntryHeader.t())
-	defmparser entry_header() do
+	@spec header() :: ExParsec.t(term(), Header.t())
+	defmparser header() do
 		line_num <- line_number()
 		date <- date()
 		whitespace()
-		status <- entry_status()
+		status <- transaction_status()
 		whitespace()
 		code <- option(code())
 		whitespace()
 		payee <- payee()
 		comment <- option(comment())
 
-		return %EntryHeader{line_number: line_num,
-											  date: date,
-											  status: status,
-											  code: get_optional(code),
-											  payee: payee,
-											  comment: get_optional(comment)}
+		return %Header{line_number: line_num,
+									 date: date,
+									 status: status,
+									 code: get_optional(code),
+									 payee: payee,
+									 comment: get_optional(comment)}
 	end
 
 
@@ -370,13 +370,13 @@ defmodule JournalParser do
 
 
 
-	# Entry Line Parser
+	# Posting Parser
 
 	@doc """
-	Expects and parses an entry line.
+	Expects and parses a posting.
 	"""
-	@spec entry_line() :: ExParsec.t(term(), EntryLine.t())
-	defmparser entry_line() do
+	@spec posting() :: ExParsec.t(term(), Posting.t())
+	defmparser posting() do
 		line_num <- line_number()
 		mandatory_whitespace()
 		account <- account()
@@ -384,16 +384,16 @@ defmodule JournalParser do
 		amount <- amount()
 		comment <- option(pair_right(whitespace(), comment()))
 
-		return %EntryLine{header: nil,
-											line_number: line_num,
-											account: account,
-											amount: amount,
-											comment: get_optional(comment)}
+		return %Posting{header: nil,
+										line_number: line_num,
+										account: account,
+										amount: amount,
+										comment: get_optional(comment)}
 	end
 
 
 
-	# Entry Parsers
+	# Transaction Parsers
 
 	@doc """
 	Expects and parses a comment line.
@@ -405,13 +405,12 @@ defmodule JournalParser do
 	end
 
 	@doc """
-	Expects and parses an entry line sequence. An entry line sequence can be made
-	up of entry lines or lines containing just comments.
+	Expects and parses a posting or a comment line.
 	"""
-	@spec entry_line_or_comment_line()
-		:: ExParsec.t(term(), EntryLine.t() | {:comment, String.t()})
-	defmparser entry_line_or_comment_line() do
-		result <- either(entry_line(), comment_line())
+	@spec posting_or_comment_line()
+		:: ExParsec.t(term(), Posting.t() | {:comment, String.t()})
+	defmparser posting_or_comment_line() do
+		result <- either(posting(), comment_line())
 		whitespace()
 		line_ending()
 
@@ -419,16 +418,16 @@ defmodule JournalParser do
 	end
 
 	@doc """
-	Expects and parses an entry.
+	Expects and parses an transaction.
 	"""
 	#@spec
-	defmparser entry() do
-		header <- entry_header()
+	defmparser transaction() do
+		header <- header()
 		whitespace()
 		line_ending()
-		lines <- many1(entry_line_or_comment_line())
+		lines <- many1(posting_or_comment_line())
 
-		return {header, Enum.filter(lines, &EntryLine.entry_line?/1)}
+		return {header, Enum.filter(lines, &Posting.posting?/1)}
 	end
 
 
