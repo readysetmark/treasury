@@ -375,8 +375,8 @@ defmodule JournalParser do
 	@doc """
 	Expects and parses a posting.
 	"""
-	@spec posting() :: ExParsec.t(term(), Posting.t())
-	defmparser posting() do
+	@spec posting(Header.t()) :: ExParsec.t(term(), Posting.t())
+	defmparser posting(header) do
 		line_num <- line_number()
 		mandatory_whitespace()
 		account <- account()
@@ -384,7 +384,7 @@ defmodule JournalParser do
 		amount <- amount()
 		comment <- option(pair_right(whitespace(), comment()))
 
-		return %Posting{header: nil,
+		return %Posting{header: header,
 										line_number: line_num,
 										account: account,
 										amount: amount,
@@ -393,7 +393,7 @@ defmodule JournalParser do
 
 
 
-	# Transaction Parsers
+	# Comment Line Parser
 
 	@doc """
 	Expects and parses a comment line.
@@ -404,13 +404,17 @@ defmodule JournalParser do
 		return {:comment, comment}
 	end
 
+
+
+	# Transaction Parsers
+
 	@doc """
 	Expects and parses a posting or a comment line.
 	"""
-	@spec posting_or_comment_line()
+	@spec posting_or_comment_line(Header.t())
 		:: ExParsec.t(term(), Posting.t() | {:comment, String.t()})
-	defmparser posting_or_comment_line() do
-		result <- either(posting(), comment_line())
+	defmparser posting_or_comment_line(header) do
+		result <- either(posting(header), comment_line())
 		whitespace()
 		line_ending()
 
@@ -420,16 +424,15 @@ defmodule JournalParser do
 	@doc """
 	Expects and parses an transaction.
 	"""
-	#@spec
+	@spec transaction() :: ExParsec.t(term(), [Posting.t()])
 	defmparser transaction() do
 		header <- header()
 		whitespace()
 		line_ending()
-		lines <- many1(posting_or_comment_line())
+		lines <- many1(posting_or_comment_line(header))
 
-		return {header, Enum.filter(lines, &Posting.posting?/1)}
+		return Enum.filter(lines, &Posting.posting?/1)
 	end
-
 
 
 

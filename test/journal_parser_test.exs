@@ -4,6 +4,7 @@ defmodule JournalParserTest do
 	alias JournalParser, as: P
 	alias Types.Amount
 	alias Types.Date
+	alias Types.Header
 	alias Types.Posting
 	alias Types.Symbol
 
@@ -360,19 +361,23 @@ defmodule JournalParserTest do
 	# Posting Parser Tests
 
 	test "Posting with all components" do
-		{:ok, _, posting} = ExParsec.parse_text "\tAssets:Savings\t$45.00\t;comment", P.posting
-		assert posting.header == nil
+		{:ok, _, posting} =
+			ExParsec.parse_text "\tAssets:Savings\t$45.00\t;comment",
+													P.posting(%Header{})
+		assert posting.header == %Header{}
 		assert posting.line_number == 1
 		assert posting.account == ["Assets", "Savings"]
 		assert posting.amount == %Amount{qty: D.new("45.00"),
-																	 symbol: %Symbol{value: "$", quoted: false},
-																	 format: :symbol_left_no_space}
+																	   symbol: %Symbol{value: "$", quoted: false},
+																	   format: :symbol_left_no_space}
 		assert posting.comment == "comment"
 	end
 
 	test "Posting with all components -- commodity" do
-		{:ok, _, posting} = ExParsec.parse_text "\tAssets:Investments\t13.508 \"MUTF514\"\t;comment", P.posting
-		assert posting.header == nil
+		{:ok, _, posting} =
+			ExParsec.parse_text "\tAssets:Investments\t13.508 \"MUTF514\"\t;comment",
+													P.posting(%Header{})
+		assert posting.header == %Header{}
 		assert posting.line_number == 1
 		assert posting.account == ["Assets", "Investments"]
 		assert posting.amount == %Amount{qty: D.new("13.508"),
@@ -382,8 +387,9 @@ defmodule JournalParserTest do
 	end
 
 	test "Posting with whitespace but no comment" do
-		{:ok, _, posting} = ExParsec.parse_text "\tAssets:Savings\t$45.00\t", P.posting
-		assert posting.header == nil
+		{:ok, _, posting} =
+			ExParsec.parse_text "\tAssets:Savings\t$45.00\t", P.posting(%Header{})
+		assert posting.header == %Header{}
 		assert posting.line_number == 1
 		assert posting.account == ["Assets", "Savings"]
 		assert posting.amount == %Amount{qty: D.new("45.00"),
@@ -393,8 +399,9 @@ defmodule JournalParserTest do
 	end
 
 	test "Posting with no whitespace or comment" do
-		{:ok, _, posting} = ExParsec.parse_text "\tAssets:Savings\t$45.00", P.posting
-		assert posting.header == nil
+		{:ok, _, posting} =
+			ExParsec.parse_text "\tAssets:Savings\t$45.00", P.posting(%Header{})
+		assert posting.header == %Header{}
 		assert posting.line_number == 1
 		assert posting.account == ["Assets", "Savings"]
 		assert posting.amount == %Amount{qty: D.new("45.00"),
@@ -404,8 +411,9 @@ defmodule JournalParserTest do
 	end
 
 	test "Posting with inferred amount" do
-		{:ok, _, posting} = ExParsec.parse_text " Assets:Savings ;comment ", P.posting
-		assert posting.header == nil
+		{:ok, _, posting} =
+			ExParsec.parse_text " Assets:Savings ;comment ", P.posting(%Header{})
+		assert posting.header == %Header{}
 		assert posting.line_number == 1
 		assert posting.account == ["Assets", "Savings"]
 		assert posting.amount == :infer_amount
@@ -413,8 +421,9 @@ defmodule JournalParserTest do
 	end
 
 	test "Posting with inferred amount, whitespace, no comment" do
-		{:ok, _, posting} = ExParsec.parse_text " Assets:Savings ", P.posting
-		assert posting.header == nil
+		{:ok, _, posting} =
+			ExParsec.parse_text " Assets:Savings ", P.posting(%Header{})
+		assert posting.header == %Header{}
 		assert posting.line_number == 1
 		assert posting.account == ["Assets", "Savings"]
 		assert posting.amount == :infer_amount
@@ -422,8 +431,9 @@ defmodule JournalParserTest do
 	end
 
 	test "Posting with inferred amount, no whitespace, no comment" do
-		{:ok, _, posting} = ExParsec.parse_text " Assets:Savings", P.posting
-		assert posting.header == nil
+		{:ok, _, posting} =
+			ExParsec.parse_text " Assets:Savings", P.posting(%Header{})
+		assert posting.header == %Header{}
 		assert posting.line_number == 1
 		assert posting.account == ["Assets", "Savings"]
 		assert posting.amount == :infer_amount
@@ -431,7 +441,7 @@ defmodule JournalParserTest do
 	end
 
 
-	# Transaction Parsers Tests
+	# Comment Line Parser Tests
 
 	test "Comment line with leading whitespace" do
 		{:ok, _, result} = ExParsec.parse_text "  ;comment", P.comment_line
@@ -443,21 +453,24 @@ defmodule JournalParserTest do
 		assert result == {:comment, "comment"}
 	end
 
+
+	# Transaction Parsers Tests
+
 	test "Posting or comment line: comment" do
 		{:ok, _, result} =
-			ExParsec.parse_text ";  comment\n", P.posting_or_comment_line
+			ExParsec.parse_text ";  comment\n", P.posting_or_comment_line(%Header{})
 		assert result == {:comment, "  comment"}
 	end
 
 	test "Posting or comment line: posting" do
 		{:ok, _, result} =
 			ExParsec.parse_text "  Assets:Savings  $45.00\n",
-												  P.posting_or_comment_line
+												  P.posting_or_comment_line(%Header{})
 		assert Posting.posting?(result)
 	end
 
 	test "Transaction: Basic" do
-		{:ok, _, {header, postings}} =
+		{:ok, _, postings} =
 			ExParsec.parse_text(
 				"""
 				2015/03/06 * Basic transaction ;comment
@@ -465,12 +478,31 @@ defmodule JournalParserTest do
 				  Liabilities:Credit
 				""",
 				P.transaction)
-		assert header.line_number == 1
-		assert header.date == %Date{year: 2015, month: 3, day: 6}
-		assert header.status == :cleared
-		assert header.payee == "Basic transaction "
-		assert header.comment == "comment"
 		assert Enum.count(postings) == 2
+		
+		posting1 = Enum.at postings, 0
+		assert posting1.header.line_number == 1
+		assert posting1.header.date == %Date{year: 2015, month: 3, day: 6}
+		assert posting1.header.status == :cleared
+		assert posting1.header.payee == "Basic transaction "
+		assert posting1.header.comment == "comment"
+		assert posting1.line_number == 2
+		assert posting1.account == ["Expenses", "Groceries"]
+		assert posting1.amount == %Amount{qty: D.new("45.00"),
+																		 symbol: %Symbol{value: "$", quoted: false},
+																		 format: :symbol_left_no_space}
+		assert posting1.comment == nil
+
+		posting2 = Enum.at postings, 1
+		assert posting2.header.line_number == 1
+		assert posting2.header.date == %Date{year: 2015, month: 3, day: 6}
+		assert posting2.header.status == :cleared
+		assert posting2.header.payee == "Basic transaction "
+		assert posting2.header.comment == "comment"
+		assert posting2.line_number == 3
+		assert posting2.account == ["Liabilities", "Credit"]
+		assert posting2.amount == :infer_amount
+		assert posting2.comment == nil
 	end
 
 
