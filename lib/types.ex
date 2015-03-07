@@ -73,6 +73,13 @@ defmodule Types do
 													 account: [String.t()],
 													 amount: Amount.t(),
 													 comment: String.t()}
+
+		@doc """
+		Returns `true` if argument is an EntryLine; otherwise `false`.
+		"""
+		@spec entry_line?(any) :: boolean
+		def entry_line?(%EntryLine{}), do: true
+		def entry_line?(_), 					 do: false
 	end
 
 end

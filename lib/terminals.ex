@@ -49,11 +49,27 @@ defmodule Terminals do
 	end
 
 	@doc """
+	Carriage return.
+	"""
+	@spec carriage_return(String.codepoint()) :: boolean()
+	def carriage_return(c) do
+		c == "\r"
+	end
+
+	@doc """
+	Line feed.
+	"""
+	@spec line_feed(String.codepoint()) :: boolean()
+	def line_feed(c) do
+		c == "\n"
+	end
+
+	@doc """
 	Newline.
 	"""
 	@spec newline(String.codepoint()) :: boolean()
 	def newline(c) do
-		c == "\r" or c == "\n"
+		carriage_return(c) or line_feed(c)
 	end
 
 	@doc """

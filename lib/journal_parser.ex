@@ -29,6 +29,38 @@ defmodule JournalParser do
 
 
 
+	# Line Ending Parsers
+
+	@doc """
+	Expects and parses a Unix-style line ending.
+	"""
+	@spec line_ending_unix() :: ExParsec.t(term(), :newline)
+	defmparser line_ending_unix() do
+		satisfy("unix line ending", &T.line_feed/1)
+		return :newline
+	end
+
+	@doc """
+	Expects and parses a Windows-style line ending.
+	"""
+	@spec line_ending_windows() :: ExParsec.t(term(), :newline)
+	defmparser line_ending_windows() do
+		label(sequence([satisfy("\\r", &T.carriage_return/1),
+					 			    satisfy("\\n", &T.line_feed/1)]),
+					"windows line ending")
+		return :newline
+	end
+
+	@doc """
+	Expects and parses a Unix- or Windows-style line ending.
+	"""
+	@spec line_ending() :: ExParsec.t(term(), :newline)
+	defmparser line_ending() do
+		either(line_ending_unix(), line_ending_windows())
+	end
+
+
+
 	# Whitespace Parsers
 
 	@doc """
@@ -358,5 +390,58 @@ defmodule JournalParser do
 											amount: amount,
 											comment: get_optional(comment)}
 	end
+
+
+
+	# Entry Parsers
+
+	@doc """
+	Expects and parses a comment line.
+	"""
+	@spec comment_line() :: ExParsec.t(term(), {:comment, String.t()})
+	defmparser comment_line() do
+		comment <- pair_right(whitespace(), comment())
+		return {:comment, comment}
+	end
+
+	@doc """
+	Expects and parses an entry line sequence. An entry line sequence can be made
+	up of entry lines or lines containing just comments.
+	"""
+	@spec entry_line_or_comment_line()
+		:: ExParsec.t(term(), EntryLine.t() | {:comment, String.t()})
+	defmparser entry_line_or_comment_line() do
+		result <- either(entry_line(), comment_line())
+		whitespace()
+		line_ending()
+
+		return result
+	end
+
+	@doc """
+	Expects and parses an entry.
+	"""
+	#@spec
+	defmparser entry() do
+		header <- entry_header()
+		whitespace()
+		line_ending()
+		lines <- many1(entry_line_or_comment_line())
+
+		return {header, Enum.filter(lines, &EntryLine.entry_line?/1)}
+	end
+
+
+
+
+	# Price Parsers
+
+
+
+	# Journal File Parsers
+
+
+
+	# Price DB File Parsers
 
 end

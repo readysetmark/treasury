@@ -6,6 +6,20 @@ defmodule JournalParserTest do
 	alias Types.Date
 	alias Types.Symbol
 
+
+	# Line Ending Parsers
+
+	test "Line ending: Unix-style" do
+		{:ok, _, result} = ExParsec.parse_text "\n", P.line_ending
+		assert result == :newline
+	end
+
+	test "Line ending: Windows-style" do
+		{:ok, _, result} = ExParsec.parse_text "\r\n", P.line_ending
+		assert result == :newline
+	end
+
+
 	# Whitespace Parsers Tests
 
 	test "Whitespace just spaces" do
@@ -414,5 +428,49 @@ defmodule JournalParserTest do
 		assert entry.amount == :infer_amount
 		assert entry.comment == nil
 	end
+
+
+	# Entry Parsers Tests
+
+	test "Comment line with leading whitespace" do
+		{:ok, _, result} = ExParsec.parse_text "  ;comment", P.comment_line
+		assert result == {:comment, "comment"}
+	end
+
+	test "Comment line with no leading whitespace" do
+		{:ok, _, result} = ExParsec.parse_text ";comment", P.comment_line
+		assert result == {:comment, "comment"}
+	end
+
+	test "Entry line or comment line: comment" do
+		{:ok, _, result} =
+			ExParsec.parse_text ";  comment\n", P.entry_line_or_comment_line
+		assert result == {:comment, "  comment"}
+	end
+
+	test "Entry line or comment line: entry line" do
+		{:ok, _, result} =
+			ExParsec.parse_text "  Assets:Savings  $45.00\n",
+												  P.entry_line_or_comment_line
+		assert result
+	end
+
+	test "Entry: Basic" do
+		{:ok, _, {header, entry_lines}} =
+			ExParsec.parse_text(
+				"""
+				2015/03/06 * Basic entry ;comment
+				  Expenses:Groceries		$45.00
+				  Liabilities:Credit
+				""",
+				P.entry)
+		assert header.line_number == 1
+		assert header.date == %Date{year: 2015, month: 3, day: 6}
+		assert header.status == :cleared
+		assert header.payee == "Basic entry "
+		assert header.comment == "comment"
+		assert Enum.count(entry_lines) == 2
+	end
+
 
 end
