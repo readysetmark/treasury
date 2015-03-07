@@ -88,4 +88,20 @@ defmodule Types do
 		def posting?(_), 					do: false
 	end
 
+
+	defmodule Price do
+		@moduledoc """
+		Defines a price entry.
+		"""
+		alias Types.Amount
+		alias Types.Date
+		alias Types.Symbol
+
+		defstruct date: nil, symbol: nil, amount: nil
+
+		@type t :: %__MODULE__{date: Date.t(),
+													 symbol: Symbol.t(),
+													 amount: Amount.t()}
+	end
+
 end

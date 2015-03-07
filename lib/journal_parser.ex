@@ -5,11 +5,12 @@ defmodule JournalParser do
 	alias Decimal, as: D
 	alias Terminals, as: T
 	alias Types
-	alias Types.Symbol
 	alias Types.Amount
 	alias Types.Date
 	alias Types.Header
 	alias Types.Posting
+	alias Types.Price
+	alias Types.Symbol
 
 
 	# Helpers
@@ -436,7 +437,25 @@ defmodule JournalParser do
 
 
 
-	# Price Parsers
+	# Price Parser
+
+	@doc """
+	Expects and parses a price entry. Price entries take the format:
+
+		P <date> <symbol> <amount>
+	"""
+	@spec price() :: ExParsec.t(term(), Price.t())
+	defmparser price() do
+		satisfy("price indicator", &T.price_indicator/1)
+		mandatory_whitespace()
+		date <- date()
+		mandatory_whitespace()
+		symbol <- symbol()
+		mandatory_whitespace()
+		amount <- amount()
+
+		return %Price{date: date, symbol: symbol, amount: amount}
+	end
 
 
 

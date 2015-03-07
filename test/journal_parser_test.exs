@@ -488,9 +488,10 @@ defmodule JournalParserTest do
 		assert posting1.header.comment == "comment"
 		assert posting1.line_number == 2
 		assert posting1.account == ["Expenses", "Groceries"]
-		assert posting1.amount == %Amount{qty: D.new("45.00"),
-																		 symbol: %Symbol{value: "$", quoted: false},
-																		 format: :symbol_left_no_space}
+		assert posting1.amount ==
+			%Amount{qty: D.new("45.00"),
+						 	symbol: %Symbol{value: "$", quoted: false},
+						 	format: :symbol_left_no_space}
 		assert posting1.comment == nil
 
 		posting2 = Enum.at postings, 1
@@ -505,5 +506,18 @@ defmodule JournalParserTest do
 		assert posting2.comment == nil
 	end
 
+
+	# Price Parser Tests
+
+	test "Price entry" do
+		{:ok, _, price} =
+			ExParsec.parse_text "P 2015/03/07 \"MUTF514\" $5.42", P.price
+		assert price.date == %Date{year: 2015, month: 3, day: 7}
+		assert price.symbol == %Symbol{value: "MUTF514", quoted: true}
+		assert price.amount ==
+			%Amount{qty: D.new("5.42"),
+							symbol: %Symbol{value: "$", quoted: false},
+						  format: :symbol_left_no_space}
+	end
 
 end

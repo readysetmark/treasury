@@ -161,4 +161,12 @@ defmodule Terminals do
 		!(c in codepoints)
 	end
 
+	@doc """
+	Terminal for price indicator.
+	"""
+	@spec price_indicator(String.codepoint()) :: boolean()
+	def price_indicator(c) do
+		c == "P"
+	end
+
 end
