@@ -520,4 +520,35 @@ defmodule JournalParserTest do
 						  format: :symbol_left_no_space}
 	end
 
+
+	# Price DB File Parser Tests
+
+	test "Price DB file no records" do
+		{:ok, _, prices} =
+			ExParsec.parse_text "", P.price_db
+		assert Enum.count(prices) == 0
+	end
+
+	test "Price DB file one record" do
+		{:ok, _, prices} =
+			ExParsec.parse_text(
+				"""
+				P 2015-03-07 \"MUTF514\" $5.42
+				""",
+				P.price_db)
+		assert Enum.count(prices) == 1
+	end
+
+	test "Price DB file multiple records" do
+		{:ok, _, prices} =
+			ExParsec.parse_text(
+				"""
+				P 2015-03-07 \"MUTF514\" $5.42
+				P 2015-03-07 \"MUTF803\" $15.98
+				P 2015-03-07 AAPL $313.38
+				""",
+				P.price_db)
+		assert Enum.count(prices) == 3
+	end
+
 end

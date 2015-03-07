@@ -463,6 +463,14 @@ defmodule JournalParser do
 
 
 
-	# Price DB File Parsers
+	# Price DB File Parser
+
+	@doc """
+	Expects and parses a price DB file, which contains only price entries.
+	"""
+	@spec price_db() :: ExParsec.t(term(), [Price.t()])
+	defmparser price_db() do
+		sep_by(price(), line_ending())
+	end
 
 end
